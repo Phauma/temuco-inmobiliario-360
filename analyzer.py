@@ -19,7 +19,7 @@ from models import (
 from market_data import SECTORES_TEMUCO, calcular_precio_m2_referencia
 from scorer import calcular_score, label_score
 
-load_dotenv()
+load_dotenv(override=False)  # solo carga .env si la variable no existe en el sistema
 
 _client = None
 
@@ -27,7 +27,13 @@ _client = None
 def get_client() -> anthropic.Anthropic:
     global _client
     if _client is None:
-        _client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+        api_key = os.environ.get("ANTHROPIC_API_KEY") or os.getenv("ANTHROPIC_API_KEY")
+        if not api_key:
+            raise ValueError(
+                "ANTHROPIC_API_KEY no está configurada. "
+                "Agrégala en las variables de entorno de Render."
+            )
+        _client = anthropic.Anthropic(api_key=api_key)
     return _client
 
 
