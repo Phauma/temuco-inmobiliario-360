@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Temuco Inmobiliario 360</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    .gradient-header { background: linear-gradient(135deg, #1e3a5f 0%, #2d6a4f 100%); }
+    .card { @apply bg-white rounded-xl shadow-sm border border-gray-100 p-6; }
+    .input-field { @apply w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent; }
+    .label { @apply block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide; }
+    .section-title { @apply text-sm font-bold text-gray-700 uppercase tracking-widest mb-4 pb-2 border-b border-gray-100; }
+    .badge-rec { @apply inline-block px-3 py-1 rounded-full text-xs font-bold uppercase; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<!-- Header -->
+<header class="gradient-header text-white shadow-lg">
+  <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <i class="fas fa-building text-2xl text-emerald-300"></i>
+      <div>
+        <h1 class="text-xl font-bold">Temuco Inmobiliario 360</h1>
+        <p class="text-xs text-blue-200">Análisis profesional · Powered by Claude AI</p>
+      </div>
+    </div>
+    <nav class="flex gap-4 text-sm">
+      <a href="/" class="text-white hover:text-emerald-300 transition"><i class="fas fa-home mr-1"></i>Inicio</a>
+      <a href="/historial" class="text-white hover:text-emerald-300 transition"><i class="fas fa-history mr-1"></i>Historial</a>
+      <a href="/mapa/plusvalia" class="text-white hover:text-emerald-300 transition"><i class="fas fa-map mr-1"></i>Mapas</a>
+    </nav>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 py-8">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Formulario principal -->
+    <div class="lg:col-span-2">
+      <form method="POST" action="/analizar" id="formAnalisis">
+
+        <!-- Sección 1: Identificación -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-4">
+          <h2 class="section-title"><i class="fas fa-map-marker-alt mr-2 text-blue-500"></i>Identificación de la Propiedad</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="md:col-span-2">
+              <label class="label">Dirección o descripción de ubicación *</label>
+              <input type="text" name="direccion" required placeholder="Ej: Los Aromos 1234, Temuco" class="input-field">
+            </div>
+            <div>
+              <label class="label">Sector / Barrio</label>
+              <select name="sector" class="input-field">
+                <option value="">— Seleccionar sector —</option>
+                {% for key, nombre in sectores %}
+                <option value="{{ key }}">{{ nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <label class="label">Objetivo del análisis</label>
+              <select name="objetivo" class="input-field">
+                {% for val, label in objetivos %}
+                <option value="{{ val }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sección 2: Tipo y Superficies -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-4">
+          <h2 class="section-title"><i class="fas fa-ruler-combined mr-2 text-green-500"></i>Tipo y Superficies</h2>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div>
+              <label class="label">Tipo de propiedad *</label>
+              <select name="tipo_propiedad" required class="input-field">
+                {% for val, label in tipos %}
+                <option value="{{ val }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <label class="label">Superficie útil (m²)</label>
+              <input type="number" name="superficie_util_m2" step="0.1" min="1" placeholder="Ej: 120" class="input-field">
+            </div>
+            <div>
+              <label class="label">Superficie terreno (m²)</label>
+              <input type="number" name="superficie_terreno_m2" step="0.1" min="1" placeholder="Ej: 300" class="input-field">
+            </div>
+          </div>
+        </div>
+
+        <!-- Sección 3: Precio -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-4">
+          <h2 class="section-title"><i class="fas fa-tag mr-2 text-yellow-500"></i>Precio y Avalúo</h2>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div>
+              <label class="label">Precio publicado (UF)</label>
+              <input type="number" name="precio_publicado_uf" step="0.1" min="1" placeholder="Ej: 3500" class="input-field">
+            </div>
+            <div>
+              <label class="label">Rol SII</label>
+              <input type="text" name="rol_sii" placeholder="Ej: 799-12" class="input-field">
+            </div>
+            <div>
+              <label class="label">Avalúo fiscal (UF)</label>
+              <input type="number" name="avaluo_fiscal_uf" step="0.1" placeholder="Ej: 2800" class="input-field">
+            </div>
+            <div>
+              <label class="label">Contribuciones (UF/año)</label>
+              <input type="number" name="contribuciones_uf" step="0.01" placeholder="Ej: 12.5" class="input-field">
+            </div>
+            <div>
+              <label class="label">Gastos comunes (UF/mes)</label>
+              <input type="number" name="gastos_comunes_uf" step="0.01" placeholder="Ej: 1.5" class="input-field">
+            </div>
+            <div>
+              <label class="label">Arriendo actual (UF/mes)</label>
+              <input type="number" name="arriendo_actual_uf" step="0.01" placeholder="Si está arrendado" class="input-field">
+            </div>
+          </div>
+        </div>
+
+        <!-- Sección 4: Características -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-4">
+          <h2 class="section-title"><i class="fas fa-home mr-2 text-purple-500"></i>Características Físicas</h2>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <label class="label">Año construcción</label>
+              <input type="number" name="anio_construccion" min="1900" max="2025" placeholder="Ej: 2005" class="input-field">
+            </div>
+            <div>
+              <label class="label">Estado conservación</label>
+              <select name="estado_conservacion" class="input-field">
+                <option value="">— Seleccionar —</option>
+                {% for val, label in estados %}
+                <option value="{{ val }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <label class="label">Dormitorios</label>
+              <input type="number" name="dormitorios" min="0" max="20" placeholder="Ej: 3" class="input-field">
+            </div>
+            <div>
+              <label class="label">Baños</label>
+              <input type="number" name="banos" step="0.5" min="0" placeholder="Ej: 2" class="input-field">
+            </div>
+            <div>
+              <label class="label">Estacionamientos</label>
+              <input type="number" name="estacionamientos" min="0" max="10" value="0" class="input-field">
+            </div>
+            <div>
+              <label class="label">Bodegas</label>
+              <input type="number" name="bodegas_extra" min="0" max="5" value="0" class="input-field">
+            </div>
+          </div>
+        </div>
+
+        <!-- Sección 5: Opciones y observaciones -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-4">
+          <h2 class="section-title"><i class="fas fa-cogs mr-2 text-gray-500"></i>Opciones y Contexto</h2>
+          <div class="mb-4">
+            <label class="label">Observaciones adicionales</label>
+            <textarea name="observaciones" rows="3" placeholder="Remodelaciones, restricciones, motivación venta, historia de la propiedad..." class="input-field resize-none"></textarea>
+          </div>
+          <div class="flex flex-wrap gap-6">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" name="buscar_comparables_portal" value="on" class="w-4 h-4 text-blue-600">
+              <span class="text-sm text-gray-700"><i class="fas fa-search mr-1"></i>Buscar comparables en Portal Inmobiliario</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" name="consultar_sii" value="on" class="w-4 h-4 text-blue-600">
+              <span class="text-sm text-gray-700"><i class="fas fa-file-alt mr-1"></i>Consultar datos SII (requiere Rol)</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" name="incluir_mapa" value="on" checked class="w-4 h-4 text-blue-600">
+              <span class="text-sm text-gray-700"><i class="fas fa-map mr-1"></i>Incluir mapa de ubicación</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Botón analizar -->
+        <button type="submit" id="btnAnalizar"
+          class="w-full bg-gradient-to-r from-blue-700 to-emerald-600 text-white font-bold py-4 rounded-xl text-lg hover:from-blue-800 hover:to-emerald-700 transition-all shadow-md flex items-center justify-center gap-2">
+          <i class="fas fa-brain"></i>
+          <span id="btnText">Analizar Propiedad con IA</span>
+        </button>
+
+      </form>
+    </div>
+
+    <!-- Sidebar: Historial + Info -->
+    <div class="space-y-4">
+
+      <!-- Benchmarks rápidos -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <h3 class="section-title"><i class="fas fa-chart-bar mr-2 text-blue-500"></i>Referencia Temuco</h3>
+        <div class="space-y-2 text-xs">
+          <div class="flex justify-between py-1 border-b border-gray-50">
+            <span class="text-gray-500">Barrio Inglés / P. Valdivia</span>
+            <span class="font-semibold text-gray-800">50–82 UF/m²</span>
+          </div>
+          <div class="flex justify-between py-1 border-b border-gray-50">
+            <span class="text-gray-500">Pueblo Nuevo / Av. Alemania</span>
+            <span class="font-semibold text-gray-800">42–68 UF/m²</span>
+          </div>
+          <div class="flex justify-between py-1 border-b border-gray-50">
+            <span class="text-gray-500">Los Robles / Santa Rosa</span>
+            <span class="font-semibold text-gray-800">28–52 UF/m²</span>
+          </div>
+          <div class="flex justify-between py-1 border-b border-gray-50">
+            <span class="text-gray-500">Amanecer / Villa Aromos</span>
+            <span class="font-semibold text-gray-800">22–46 UF/m²</span>
+          </div>
+          <div class="flex justify-between py-1">
+            <span class="text-gray-500">Padre Las Casas / Labranza</span>
+            <span class="font-semibold text-gray-800">12–35 UF/m²</span>
+          </div>
+        </div>
+        <div class="mt-3 text-xs text-gray-400">
+          Cap rate referencia: deptos 5-7% | casas 4-6% | locales 6-9%
+        </div>
+      </div>
+
+      <!-- Historial reciente -->
+      {% if historial %}
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <h3 class="section-title"><i class="fas fa-history mr-2 text-gray-500"></i>Análisis Recientes</h3>
+        <div class="space-y-2">
+          {% for h in historial %}
+          <a href="/analisis/{{ h.id }}" class="block hover:bg-gray-50 rounded-lg p-2 transition">
+            <div class="flex justify-between items-start">
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-semibold text-gray-800 truncate">{{ h.direccion[:35] }}{% if h.direccion|length > 35 %}...{% endif %}</p>
+                <p class="text-xs text-gray-400">{{ h.fecha }} · {{ h.tipo }}</p>
+              </div>
+              <div class="ml-2 flex-shrink-0 text-right">
+                <span class="text-xs font-bold
+                  {% if h.label == 'excelente' %}text-green-600
+                  {% elif h.label == 'bueno' %}text-blue-600
+                  {% elif h.label == 'regular' %}text-yellow-600
+                  {% else %}text-red-500{% endif %}">
+                  {{ h.score }}/100
+                </span>
+                <p class="text-xs text-gray-400 capitalize">{{ h.recomendacion }}</p>
+              </div>
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+        <a href="/historial" class="mt-3 block text-center text-xs text-blue-600 hover:text-blue-800">Ver todo el historial →</a>
+      </div>
+      {% endif %}
+
+      <!-- Mapas de calor -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <h3 class="section-title"><i class="fas fa-map-marked-alt mr-2 text-emerald-500"></i>Mapas de Temuco</h3>
+        <div class="grid grid-cols-2 gap-2">
+          <a href="/mapa/plusvalia" class="bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg p-3 text-center transition">
+            <i class="fas fa-trending-up text-green-600 block mb-1"></i>
+            <span class="text-xs text-green-700 font-semibold">Plusvalía</span>
+          </a>
+          <a href="/mapa/liquidez" class="bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg p-3 text-center transition">
+            <i class="fas fa-tachometer-alt text-blue-600 block mb-1"></i>
+            <span class="text-xs text-blue-700 font-semibold">Liquidez</span>
+          </a>
+          <a href="/mapa/inversion" class="bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-lg p-3 text-center transition">
+            <i class="fas fa-coins text-purple-600 block mb-1"></i>
+            <span class="text-xs text-purple-700 font-semibold">Inversión</span>
+          </a>
+          <a href="/mapa/captacion" class="bg-orange-50 hover:bg-orange-100 border border-orange-200 rounded-lg p-3 text-center transition">
+            <i class="fas fa-handshake text-orange-600 block mb-1"></i>
+            <span class="text-xs text-orange-700 font-semibold">Captación</span>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<script>
+  document.getElementById("formAnalisis").addEventListener("submit", function() {
+    const btn = document.getElementById("btnAnalizar");
+    const txt = document.getElementById("btnText");
+    btn.disabled = true;
+    btn.classList.add("opacity-75");
+    txt.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Analizando con IA... (15-25 seg)';
+  });
+</script>
+</body>
+</html>

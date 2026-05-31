@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Informe Guardado — Temuco 360</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>.gradient-header { background: linear-gradient(135deg, #1e3a5f 0%, #2d6a4f 100%); }</style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+<header class="gradient-header text-white shadow-lg">
+  <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <i class="fas fa-building text-xl text-emerald-300"></i>
+      <span class="font-bold">Temuco Inmobiliario 360</span>
+    </div>
+    <nav class="flex gap-4 text-sm">
+      <a href="/" class="text-blue-200 hover:text-white"><i class="fas fa-plus mr-1"></i>Nuevo análisis</a>
+      <a href="/historial" class="text-blue-200 hover:text-white"><i class="fas fa-history mr-1"></i>Historial</a>
+    </nav>
+  </div>
+</header>
+<div class="max-w-6xl mx-auto px-4 py-8">
+  <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-5">
+    <p class="text-sm text-blue-800"><i class="fas fa-archive mr-2"></i>
+      Análisis guardado — generado el {{ data.fecha_analisis[:16].replace('T', ' ') if data.fecha_analisis else ahora }}
+    </p>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-5">
+    <div class="flex justify-between items-start">
+      <div>
+        <h1 class="text-xl font-bold text-gray-900">{{ data.input.direccion }}</h1>
+        {% if data.input.sector %}<p class="text-gray-500 text-sm mt-1">{{ data.input.sector.replace('_', ' ').title() }}, Temuco</p>{% endif %}
+      </div>
+      <div class="flex gap-3">
+        <div class="text-center">
+          <div class="text-2xl font-bold
+            {% if data.score.total >= 75 %}text-green-600
+            {% elif data.score.total >= 55 %}text-blue-600
+            {% elif data.score.total >= 40 %}text-yellow-600
+            {% else %}text-red-500{% endif %}">
+            {{ data.score.total }}/100
+          </div>
+          <div class="text-xs text-gray-400 capitalize">{{ data.label_score }}</div>
+        </div>
+        <div class="rounded-xl px-4 py-2 text-white font-bold uppercase text-sm
+          {% if data.recomendacion == 'comprar' %}bg-green-600
+          {% elif data.recomendacion == 'negociar' %}bg-emerald-500
+          {% elif data.recomendacion == 'captar' %}bg-blue-600
+          {% elif data.recomendacion == 'vender' %}bg-orange-500
+          {% elif data.recomendacion == 'esperar' %}bg-gray-500
+          {% else %}bg-red-600{% endif %}">
+          {{ data.recomendacion }}
+        </div>
+      </div>
+    </div>
+    <div class="mt-4 bg-blue-50 border-l-4 border-blue-400 rounded-r p-3">
+      <p class="text-sm text-blue-900">{{ data.resumen_ejecutivo }}</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
+    <div class="bg-white rounded-xl border border-gray-100 p-4 text-center">
+      <div class="text-xs text-gray-400 mb-1">Valor mercado</div>
+      <div class="font-bold text-blue-700">{{ "%.0f"|format(data.valor_mercado_uf) }} UF</div>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-100 p-4 text-center">
+      <div class="text-xs text-gray-400 mb-1">Cierre probable</div>
+      <div class="font-bold text-emerald-700">{{ "%.0f"|format(data.precio_cierre_probable_uf) }} UF</div>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-100 p-4 text-center">
+      <div class="text-xs text-gray-400 mb-1">Cap rate neto</div>
+      <div class="font-bold text-purple-700">{% if data.cap_rate_neto_pct %}{{ "%.1f"|format(data.cap_rate_neto_pct) }}%{% else %}—{% endif %}</div>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-100 p-4 text-center">
+      <div class="text-xs text-gray-400 mb-1">Días en mercado</div>
+      <div class="font-bold text-gray-700">{{ data.dias_mercado_estimados }}</div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-5">
+    <h3 class="text-sm font-bold text-gray-600 uppercase mb-3">Estrategia de Negociación</h3>
+    <p class="text-sm text-gray-700">{{ data.estrategia_negociacion }}</p>
+  </div>
+
+  <div class="flex gap-3">
+    <a href="/" class="bg-blue-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-blue-700 transition">
+      <i class="fas fa-plus mr-1"></i>Nuevo análisis
+    </a>
+    <button onclick="window.print()" class="bg-gray-700 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-gray-800 transition">
+      <i class="fas fa-print mr-1"></i>Imprimir
+    </button>
+    <a href="/historial" class="bg-white border border-gray-300 text-gray-700 px-5 py-2.5 rounded-lg font-semibold hover:bg-gray-50 transition">
+      <i class="fas fa-history mr-1"></i>Historial
+    </a>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Historial de Análisis — Temuco 360</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>.gradient-header { background: linear-gradient(135deg, #1e3a5f 0%, #2d6a4f 100%); }</style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+<header class="gradient-header text-white shadow-lg">
+  <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <i class="fas fa-building text-xl text-emerald-300"></i>
+      <span class="font-bold">Temuco Inmobiliario 360</span>
+    </div>
+    <nav class="flex gap-4 text-sm">
+      <a href="/" class="text-blue-200 hover:text-white"><i class="fas fa-plus mr-1"></i>Nuevo análisis</a>
+      <a href="/mapa/plusvalia" class="text-blue-200 hover:text-white"><i class="fas fa-map mr-1"></i>Mapas</a>
+    </nav>
+  </div>
+</header>
+
+<div class="max-w-6xl mx-auto px-4 py-8">
+  <h1 class="text-2xl font-bold text-gray-800 mb-6"><i class="fas fa-history mr-2 text-blue-500"></i>Historial de Análisis</h1>
+
+  {% if registros %}
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-100">
+          <tr class="text-xs text-gray-500 uppercase tracking-wide">
+            <th class="text-left px-4 py-3">#</th>
+            <th class="text-left px-4 py-3">Fecha</th>
+            <th class="text-left px-4 py-3">Propiedad</th>
+            <th class="text-left px-4 py-3">Tipo</th>
+            <th class="text-right px-4 py-3">Precio pub.</th>
+            <th class="text-right px-4 py-3">Val. mercado</th>
+            <th class="text-center px-4 py-3">Score</th>
+            <th class="text-center px-4 py-3">Recomendación</th>
+            <th class="text-center px-4 py-3"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in registros %}
+          <tr class="border-b border-gray-50 hover:bg-gray-50 transition">
+            <td class="px-4 py-3 text-gray-400 text-xs">{{ r.id }}</td>
+            <td class="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">{{ r.fecha }}</td>
+            <td class="px-4 py-3">
+              <div class="font-semibold text-gray-800">{{ r.direccion[:45] }}{% if r.direccion|length > 45 %}...{% endif %}</div>
+              {% if r.sector %}<div class="text-xs text-gray-400">{{ r.sector.replace('_', ' ').title() }}</div>{% endif %}
+            </td>
+            <td class="px-4 py-3 text-gray-600 capitalize">{{ r.tipo }}</td>
+            <td class="px-4 py-3 text-right text-gray-700">{% if r.precio_pub %}{{ "%.0f"|format(r.precio_pub) }} UF{% else %}—{% endif %}</td>
+            <td class="px-4 py-3 text-right font-semibold text-blue-700">{{ "%.0f"|format(r.valor_mercado) }} UF</td>
+            <td class="px-4 py-3 text-center">
+              <span class="font-bold text-base
+                {% if r.score >= 75 %}text-green-600
+                {% elif r.score >= 55 %}text-blue-600
+                {% elif r.score >= 40 %}text-yellow-600
+                {% else %}text-red-500{% endif %}">
+                {{ r.score }}
+              </span>
+              <span class="text-gray-300 text-xs">/100</span>
+            </td>
+            <td class="px-4 py-3 text-center">
+              <span class="px-2 py-0.5 rounded text-xs font-bold text-white
+                {% if r.recomendacion == 'comprar' %}bg-green-600
+                {% elif r.recomendacion == 'negociar' %}bg-emerald-500
+                {% elif r.recomendacion == 'captar' %}bg-blue-600
+                {% elif r.recomendacion == 'vender' %}bg-orange-500
+                {% elif r.recomendacion == 'esperar' %}bg-gray-500
+                {% else %}bg-red-600{% endif %}">
+                {{ r.recomendacion }}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-center">
+              <a href="/analisis/{{ r.id }}" class="text-blue-600 hover:text-blue-800 text-xs font-semibold">
+                Ver →
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+    <i class="fas fa-inbox text-5xl text-gray-300 mb-4 block"></i>
+    <p class="text-gray-500">No hay análisis guardados aún.</p>
+    <a href="/" class="mt-4 inline-block bg-blue-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-blue-700 transition">
+      Realizar primer análisis
+    </a>
+  </div>
+  {% endif %}
+</div>
+</body>
+</html>
