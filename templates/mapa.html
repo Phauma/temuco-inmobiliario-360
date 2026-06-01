@@ -3,14 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mapas de Temuco — Inmobiliario 360</title>
+  <title>Mapas Temuco — Inmobiliario 360</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <style>.gradient-header { background: linear-gradient(135deg, #1e3a5f 0%, #2d6a4f 100%); }</style>
+  <style>
+    .gradient-header { background: linear-gradient(135deg, #1e3a5f 0%, #2d6a4f 100%); }
+    .capa-btn { @apply transition-all text-xs font-semibold px-3 py-2 rounded-lg border; }
+  </style>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
+
 <header class="gradient-header text-white shadow-lg">
-  <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
     <div class="flex items-center gap-3">
       <i class="fas fa-building text-xl text-emerald-300"></i>
       <span class="font-bold">Temuco Inmobiliario 360</span>
@@ -22,28 +26,65 @@
   </div>
 </header>
 
-<div class="max-w-6xl mx-auto px-4 py-6 flex-1">
-  <div class="flex items-center justify-between mb-5">
-    <h1 class="text-2xl font-bold text-gray-800">
-      <i class="fas fa-map-marked-alt mr-2 text-emerald-500"></i>Mapas de Calor — Temuco
+<div class="max-w-7xl mx-auto px-4 py-4 flex-1 flex flex-col">
+
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+    <h1 class="text-xl font-bold text-gray-800">
+      <i class="fas fa-map-marked-alt mr-2 text-emerald-500"></i>Mapas de Análisis — Temuco Urbano
     </h1>
-    <div class="flex gap-2">
-      {% for capa in capas %}
-      <a href="/mapa/{{ capa }}" class="px-4 py-2 rounded-lg text-sm font-semibold transition
-        {% if capa == capa_actual %}bg-blue-600 text-white{% else %}bg-white border border-gray-200 text-gray-700 hover:bg-gray-50{% endif %}">
-        {% if capa == 'plusvalia' %}<i class="fas fa-trending-up mr-1"></i>Plusvalía
-        {% elif capa == 'liquidez' %}<i class="fas fa-tachometer-alt mr-1"></i>Liquidez
-        {% elif capa == 'inversion' %}<i class="fas fa-coins mr-1"></i>Inversión
-        {% elif capa == 'captacion' %}<i class="fas fa-handshake mr-1"></i>Captación
-        {% endif %}
-      </a>
-      {% endfor %}
-    </div>
+    <p class="text-xs text-gray-500">Pasa el cursor sobre cada zona para ver métricas detalladas</p>
   </div>
 
-  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" style="height: calc(100vh - 220px)">
+  <!-- Botones de capas -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 mb-4">
+    {% set iconos = {
+      'precio_m2': ('fa-tag', 'blue'),
+      'arriendo_mes': ('fa-home', 'purple'),
+      'cap_rate': ('fa-percent', 'indigo'),
+      'velocidad_venta': ('fa-tachometer-alt', 'green'),
+      'plusvalia_5a': ('fa-chart-line', 'emerald'),
+      'transacciones': ('fa-exchange-alt', 'cyan'),
+      'oferta_activa': ('fa-list', 'orange'),
+      'riesgo_sobreoferta': ('fa-exclamation-triangle', 'red'),
+    } %}
+    {% set labels = {
+      'precio_m2': 'Precio UF/m²',
+      'arriendo_mes': 'Arriendo',
+      'cap_rate': 'Cap Rate',
+      'velocidad_venta': 'Velocidad Venta',
+      'plusvalia_5a': 'Plusvalía 5a',
+      'transacciones': 'Transacciones',
+      'oferta_activa': 'Oferta Activa',
+      'riesgo_sobreoferta': 'Riesgo Sobreoferta',
+    } %}
+    {% for capa_key in ['precio_m2','arriendo_mes','cap_rate','velocidad_venta','plusvalia_5a','transacciones','oferta_activa','riesgo_sobreoferta'] %}
+    {% set icono, color = iconos[capa_key] %}
+    <a href="/mapa/{{ capa_key }}"
+       class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-xl border-2 text-center transition-all
+         {% if capa_key == capa_actual %}
+           border-blue-600 bg-blue-600 text-white shadow-md
+         {% else %}
+           border-gray-200 bg-white text-gray-600 hover:border-blue-400 hover:bg-blue-50
+         {% endif %}">
+      <i class="fas {{ icono }} text-base"></i>
+      <span class="text-xs font-semibold leading-tight">{{ labels[capa_key] }}</span>
+    </a>
+    {% endfor %}
+  </div>
+
+  <!-- Mapa -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex-1" style="min-height: 580px">
     {{ mapa_html | safe }}
   </div>
+
+  <!-- Nota metodológica -->
+  <div class="mt-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 text-xs text-amber-800">
+    <i class="fas fa-info-circle mr-1"></i>
+    <strong>Nota:</strong> Polígonos aproximados — no representan límites catastrales oficiales.
+    Datos estimados en base a publicaciones activas de portales inmobiliarios (2023-2024).
+    Sin acceso a registros del CBR. Usar como referencia de mercado, no como tasación oficial.
+  </div>
+
 </div>
 </body>
 </html>

@@ -220,10 +220,13 @@ async def ver_analisis(request: Request, id: int):
 
 
 @app.get("/mapa/{capa}", response_class=HTMLResponse)
-async def mapa_calor(request: Request, capa: str = "plusvalia"):
-    capas_validas = ["plusvalia", "liquidez", "inversion", "captacion"]
+async def mapa_calor(request: Request, capa: str = "velocidad_venta"):
+    capas_validas = [
+        "precio_m2", "arriendo_mes", "cap_rate", "velocidad_venta",
+        "plusvalia_5a", "transacciones", "oferta_activa", "riesgo_sobreoferta",
+    ]
     if capa not in capas_validas:
-        capa = "plusvalia"
+        capa = "velocidad_venta"
     mapa_html = generar_mapa_calor(capa)
     return templates.TemplateResponse("mapa.html", {
         "request": request,
