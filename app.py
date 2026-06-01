@@ -20,6 +20,7 @@ from market_data import get_sector_names, SECTORES_TEMUCO, METADATA_SECTORES, ca
 from analyzer import analizar_propiedad
 from scrapers.portal_scraper import buscar_comparables
 from scrapers.sii_client import consultar_avaluo
+from scrapers.cbr_client import buscar_transferencias
 from geo_map import generar_mapa_propiedad, generar_mapa_calor
 from database import guardar_analisis, listar_analisis, obtener_analisis
 from sii_nomina import lookup_rol, guardar_desde_sii_web, estadisticas_nomina
@@ -97,6 +98,10 @@ async def analizar(
     buscar_comparables_portal: str = Form("off"),
     consultar_sii: str = Form("off"),
     incluir_mapa: str = Form("on"),
+    buscar_cbr: str = Form("off"),
+    titular_apellido: str = Form(""),
+    titular_nombres: str = Form(""),
+    titular_apellido_materno: str = Form(""),
 ):
     def opt_float(s: str) -> float | None:
         try:
@@ -149,9 +154,16 @@ async def analizar(
         )))
     if consultar_sii == "on" and prop.rol_sii:
         tasks.append(("sii", consultar_avaluo(prop.rol_sii)))
+    if buscar_cbr == "on" and titular_apellido.strip():
+        tasks.append(("cbr", buscar_transferencias(
+            apellido_paterno=titular_apellido.strip(),
+            nombres=titular_nombres.strip(),
+            apellido_materno=titular_apellido_materno.strip(),
+        )))
 
     comparables = []
     sii_data = None
+    cbr_data = None
 
     if tasks:
         results = await asyncio.gather(*[t[1] for t in tasks], return_exceptions=True)
@@ -165,6 +177,8 @@ async def analizar(
                 sii_data = result
                 if prop.rol_sii:
                     guardar_desde_sii_web(prop.rol_sii, result)  # caché permanente
+            elif name == "cbr" and result and not result.get("error"):
+                cbr_data = result
 
     # Análisis principal
     try:
@@ -174,6 +188,15 @@ async def analizar(
             "request": request,
             "error": str(e),
         }, status_code=500)
+
+    # Adjuntar datos CBR al resultado
+    if cbr_data:
+        result.cbr_encontrado = cbr_data.get("encontrado", False)
+        result.cbr_inscripciones = cbr_data.get("inscripciones", [])
+        result.cbr_ultima_transferencia = cbr_data.get("ultima_compraventa")
+        result.cbr_total = cbr_data.get("total_inscripciones", 0)
+        result.cbr_advertencia = cbr_data.get("advertencia")
+        result.cbr_fecha_consulta = cbr_data.get("fecha_consulta")
 
     # Generar mapa
     if prop.incluir_mapa:
@@ -318,6 +341,20 @@ async def api_sii_rol(rol: str):
 async def api_sii_stats():
     """Estado de la nómina SII local."""
     return JSONResponse(estadisticas_nomina())
+
+
+@app.get("/api/cbr")
+async def api_cbr(apellido: str, nombres: str = "", apellido_materno: str = ""):
+    """
+    Consulta inscripciones de propiedad en el CBR de Temuco por apellido del titular.
+    Retorna historial de transferencias (tipo, año, descripción). Precio NO disponible en índice público.
+    """
+    result = await buscar_transferencias(
+        apellido_paterno=apellido,
+        nombres=nombres,
+        apellido_materno=apellido_materno,
+    )
+    return JSONResponse(result)
 
 
 @app.get("/api/sectores")

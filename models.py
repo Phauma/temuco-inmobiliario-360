@@ -233,5 +233,13 @@ class AnalysisResult(BaseModel):
     # Factores verificables (tabla de evidencia)
     factores_verificables: list[FactorVerificable] = []
 
+    # CBR — Conservador de Bienes Raíces de Temuco
+    cbr_encontrado: Optional[bool] = None
+    cbr_inscripciones: list = []
+    cbr_ultima_transferencia: Optional[dict] = None
+    cbr_total: Optional[int] = None
+    cbr_advertencia: Optional[str] = None
+    cbr_fecha_consulta: Optional[str] = None
+
     # Mapa HTML (generado por Folium)
     mapa_html: Optional[str] = None

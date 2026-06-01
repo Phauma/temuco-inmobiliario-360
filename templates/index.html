@@ -196,6 +196,54 @@
               <span class="text-sm text-gray-700"><i class="fas fa-map mr-1"></i>Incluir mapa de ubicación</span>
             </label>
           </div>
+
+          <!-- CBR Temuco -->
+          <div class="mt-4 border-t border-gray-100 pt-4">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" name="buscar_cbr" value="on" id="checkCBR"
+                     class="w-4 h-4 text-indigo-600" onchange="toggleCBRField()">
+              <span class="text-sm text-gray-700">
+                <i class="fas fa-stamp mr-1 text-indigo-500"></i>Consultar CBR Temuco
+                <span class="text-xs text-gray-400 ml-1">— historial transferencias por apellido del titular</span>
+              </span>
+            </label>
+            <div id="cbrFields" class="hidden mt-3 pl-6">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                  <label class="label">Apellido paterno del titular</label>
+                  <div class="flex gap-1.5">
+                    <input type="text" id="cbrApellidoInput" name="titular_apellido"
+                           placeholder="Ej: GARCIA" class="input-field flex-1"
+                           style="text-transform:uppercase"
+                           oninput="limpiarResultadoCBR()">
+                    <button type="button" onclick="consultarCBR()"
+                            class="px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm
+                                   hover:bg-indigo-700 active:bg-indigo-800 transition-colors shrink-0"
+                            title="Previsualizar en CBR">
+                      <i class="fas fa-search" id="cbrBtnIcon"></i>
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label class="label">Nombres (opcional)</label>
+                  <input type="text" id="cbrNombresInput" name="titular_nombres"
+                         placeholder="Ej: JUAN PABLO" class="input-field"
+                         style="text-transform:uppercase">
+                </div>
+                <div>
+                  <label class="label">Apellido materno (opcional)</label>
+                  <input type="text" name="titular_apellido_materno"
+                         placeholder="Ej: LOPEZ" class="input-field"
+                         style="text-transform:uppercase">
+                </div>
+              </div>
+              <div id="cbrResult" class="hidden mt-2"></div>
+              <p class="text-xs text-gray-400 mt-2">
+                <i class="fas fa-info-circle mr-1"></i>
+                El CBR entrega tipo de acto, año y descripción del inmueble. El precio de escritura <strong>no está en el índice público</strong>.
+              </p>
+            </div>
+          </div>
         </div>
 
         <!-- Botón analizar -->
@@ -410,6 +458,78 @@
   // Atajo: Enter en campo Rol dispara consulta
   document.getElementById('rolSiiInput').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') { e.preventDefault(); consultarSII(); }
+  });
+
+  // ── CBR Temuco ───────────────────────────────────────────────────────────────
+
+  function toggleCBRField() {
+    const fields = document.getElementById('cbrFields');
+    fields.classList.toggle('hidden', !document.getElementById('checkCBR').checked);
+  }
+
+  function limpiarResultadoCBR() {
+    const div = document.getElementById('cbrResult');
+    div.className = 'hidden';
+    div.innerHTML = '';
+  }
+
+  async function consultarCBR() {
+    const apellido = document.getElementById('cbrApellidoInput').value.trim().toUpperCase();
+    const nombres  = document.getElementById('cbrNombresInput').value.trim().toUpperCase();
+    const icon     = document.getElementById('cbrBtnIcon');
+
+    if (!apellido) {
+      mostrarCBRMsg('warning', '<i class="fas fa-exclamation-circle mr-1"></i>Ingresa el apellido paterno del titular.');
+      return;
+    }
+
+    icon.className = 'fas fa-spinner fa-spin';
+    try {
+      const params = new URLSearchParams({ apellido, nombres });
+      const resp = await fetch(`/api/cbr?${params}`);
+      if (!resp.ok) throw new Error('Error de red');
+      const data = await resp.json();
+
+      if (data.error) {
+        mostrarCBRMsg('error', `<i class="fas fa-times-circle mr-1"></i>${data.error}`);
+        return;
+      }
+      if (!data.encontrado) {
+        mostrarCBRMsg('warning',
+          `<i class="fas fa-exclamation-triangle mr-1"></i>Sin inscripciones para <strong>${apellido}</strong> en CBR Temuco.`
+        );
+        return;
+      }
+
+      const cv = data.ultima_compraventa;
+      let html = `<i class="fas fa-check-circle mr-1"></i>`;
+      html += `<strong>${data.total_inscripciones} inscripción(es)</strong> encontradas.`;
+      if (cv) {
+        html += ` Última transferencia: <strong>${cv.tipo}</strong> año <strong>${cv.año}</strong>`;
+        if (cv.descripcion_inmueble) html += ` — ${cv.descripcion_inmueble.substring(0, 100)}`;
+      }
+      html += `<br><span class="opacity-70">Fuente: ${data.fuente || 'CBR Temuco'} · ${data.fecha_consulta || ''}</span>`;
+      mostrarCBRMsg('success', html);
+    } catch(e) {
+      mostrarCBRMsg('error', '<i class="fas fa-times-circle mr-1"></i>Error al consultar CBR. Intenta de nuevo.');
+    } finally {
+      icon.className = 'fas fa-search';
+    }
+  }
+
+  function mostrarCBRMsg(tipo, html) {
+    const div = document.getElementById('cbrResult');
+    const estilos = {
+      success: 'bg-indigo-50 border border-indigo-200 text-indigo-800',
+      warning: 'bg-amber-50 border border-amber-200 text-amber-800',
+      error:   'bg-red-50 border border-red-200 text-red-700',
+    };
+    div.className = `mt-2 px-3 py-2 rounded-lg text-xs leading-relaxed ${estilos[tipo] || estilos.warning}`;
+    div.innerHTML = html;
+  }
+
+  document.getElementById('cbrApellidoInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); consultarCBR(); }
   });
 </script>
 </body>
