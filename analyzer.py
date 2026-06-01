@@ -59,17 +59,47 @@ Rangos reales por sector (casa 100m² / depto 55m²):
 - Padre Las Casas / Labranza: casa 6-9 UF/mes | depto 4.5-7 UF/mes
 Ajusta proporcionalmente si la superficie difiere de la referencia.
 
-CAP RATES NETOS REALES TEMUCO (método NOI: arriendo × (1-vacancia) - contribuciones - gastos_op):
-- Casas residenciales (todos los sectores): 2.0-3.5% neto
-  Cap bruto casas: 3.0-4.5% | Gastos deducidos: contrib ~0.6% precio + gastos_op ~10% arriendo
-- Dptos centro alta demanda: 2.8-4.5% neto (gastos comunes reducen el neto vs bruto)
+CAP RATES NETOS REALES TEMUCO — METODOLOGÍA CALIBRADA 2024-2025:
+NOI = arriendo_anual × (1 - vacancia%) − contribuciones_SII − gastos_operacionales
+
+VACANCIA CALIBRADA (más realista que valores históricos):
+- Sectores alta demanda (Barrio Inglés, Pedro Valdivia, Pueblo Nuevo, Av. Alemania): 2.5% (≈9 días/año)
+- Sectores media demanda (Centro, Los Robles, Ricardo Saldías, Santa Rosa): 4.5% (≈16 días/año)
+- Sectores baja demanda (Amanecer, Villa Aromos, Padre Las Casas, Labranza): 7.0% (≈26 días/año)
+
+CONTRIBUCIONES SII HABITACIONAL: 0.72% del valor comercial/año
+- Base legal: tasa SII 1.2% s/avalúo fiscal; avalúo fiscal ≈ 60% valor comercial
+- Si se conoce avalúo fiscal exacto, usar: contribuciones = avalúo_fiscal × 1.2%
+
+GASTOS OPERACIONALES — DOS ESCENARIOS:
+Escenario AUTOADMIN (propietario autogestiona):
+  mantención: 3.5% arriendo anual | seguro: 0.2% precio | reserva reposición: 2.0% arriendo
+  Total: ~5.5% arriendo + 0.2% precio
+Escenario PROFESIONAL (corredora gestiona):
+  mantención: 3.5% | seguro: 0.2% precio | comisión corredora: 9% arriendo | reserva: 2.0%
+  Total: ~14.5% arriendo + 0.2% precio
+
+CAP RATES NETOS RESULTANTES (escenario autoadmin como referencia):
+- Casas residenciales alta demanda: 2.5-3.5% neto
+- Casas residenciales media/baja demanda: 1.8-2.8% neto
+- Dptos centro alta demanda: 2.8-4.5% neto (gastos comunes reducen el neto)
 - Locales comerciales: 4.5-7.0% neto
 - Bodegas/galpones: 5.0-7.5% neto
 - Oficinas centro: 4.0-6.0% neto
+
+RETORNO TOTAL = Cap Rate Neto + Plusvalía anual estimada (3 escenarios):
+- Conservador: cap_neto + plusvalía_pesimista
+- Base: cap_neto + plusvalía_base
+- Optimista: cap_neto + plusvalía_optimista
+Ejemplo Barrio Inglés autoadmin: 3.3% + 2.8%/5.0%/7.0% = 6.1% / 8.3% / 10.3% retorno total
+
 IMPORTANTE: El mercado residencial chileno tiene cap rates comprimidos. La inversión en casas/deptos
 se justifica principalmente por plusvalía (apreciación de capital), no por flujo de arriendo.
-NUNCA reportes cap rate neto >4.5% para casas/deptos en Temuco sin justificación explícita.
+NUNCA reportes cap rate neto >4.5% para casas/deptos residenciales sin justificación explícita.
 NUNCA reportes cap rate neto >7.5% para ningún tipo de propiedad en Temuco.
+SIEMPRE indica el escenario de gastos asumido (autoadmin o profesional) en el análisis financiero.
+SIEMPRE calcula Retorno Total (cap rate neto + plusvalía) en los 3 escenarios.
+Incluye en supuestos_financieros_detalle: vacancia usada, contrib calculada, gastos por escenario, NOI.
 
 PLUSVALÍA — METODOLOGÍA Y ESCENARIOS:
 Debes reportar SIEMPRE tres escenarios y explicar la base:
@@ -174,6 +204,11 @@ ANALYSIS_TOOL = {
             "flujo_mensual_uf": {"type": "number", "description": "Flujo neto mensual en UF"},
             "vacancia_probable_pct": {"type": "number"},
             "rentabilidad_anual_pct": {"type": "number"},
+            "retorno_total_conservador_pct": {"type": "number", "description": "Cap rate neto + plusvalía pesimista"},
+            "retorno_total_base_pct": {"type": "number", "description": "Cap rate neto + plusvalía base"},
+            "retorno_total_optimista_pct": {"type": "number", "description": "Cap rate neto + plusvalía optimista"},
+            "escenario_gastos": {"type": "string", "enum": ["autoadmin", "profesional"], "description": "Escenario de gastos asumido"},
+            "supuestos_financieros_detalle": {"type": "string", "description": "Detalle: vacancia%, contrib UF, gastos UF, NOI UF, precio referencia UF"},
             "plusvalia_anual_estimada_pct": {"type": "number"},
             "plusvalia_pesimista_pct": {"type": "number"},
             "plusvalia_optimista_pct": {"type": "number"},
@@ -454,6 +489,11 @@ async def analizar_propiedad(
         flujo_mensual_uf=d.get("flujo_mensual_uf"),
         vacancia_probable_pct=d.get("vacancia_probable_pct"),
         rentabilidad_anual_pct=d.get("rentabilidad_anual_pct"),
+        retorno_total_conservador_pct=d.get("retorno_total_conservador_pct"),
+        retorno_total_base_pct=d.get("retorno_total_base_pct"),
+        retorno_total_optimista_pct=d.get("retorno_total_optimista_pct"),
+        escenario_gastos=d.get("escenario_gastos"),
+        supuestos_financieros_detalle=d.get("supuestos_financieros_detalle"),
         plusvalia_anual_estimada_pct=d.get("plusvalia_anual_estimada_pct"),
         plusvalia_pesimista_pct=d.get("plusvalia_pesimista_pct"),
         plusvalia_optimista_pct=d.get("plusvalia_optimista_pct"),

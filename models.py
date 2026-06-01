@@ -192,6 +192,11 @@ class AnalysisResult(BaseModel):
     plusvalia_metodologia: Optional[str] = None
     plusvalia_factores_riesgo: Optional[str] = None
     plusvalia_factores_positivos: Optional[str] = None
+    retorno_total_conservador_pct: Optional[float] = None
+    retorno_total_base_pct: Optional[float] = None
+    retorno_total_optimista_pct: Optional[float] = None
+    escenario_gastos: Optional[str] = None
+    supuestos_financieros_detalle: Optional[str] = None
     metodologia_valor_mercado: Optional[str] = None
     metodologia_arriendo: Optional[str] = None
     metodologia_rentabilidad: Optional[str] = None

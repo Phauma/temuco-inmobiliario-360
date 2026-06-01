@@ -277,11 +277,30 @@
           </div>
           <div class="rent-row">
             <div>
-              <span class="text-xs font-semibold text-gray-700">Cap Rate institucional</span>
-              <div class="text-xs text-gray-400">NOI: vacancia {{ r.vacancia_pct }}% + contrib 0.6% + gastos_op 10%</div>
+              <span class="text-xs font-semibold text-gray-700">Cap Rate neto (autoadmin)</span>
+              <div class="text-xs text-gray-400">NOI: vac {{ r.vacancia_pct }}% · contrib 0.72% · gastos 5.5%+seg</div>
             </div>
             <span class="font-bold text-violet-700 text-sm">{{ r.cap_inst }}%</span>
           </div>
+          {% if r.retorno_base is defined and r.retorno_base %}
+          <div class="rent-row">
+            <div>
+              <span class="text-xs font-semibold text-gray-700">Retorno Total base</span>
+              <div class="text-xs text-gray-400">Cap Rate + plusvalía base {{ r.plusvalia_base }}%/año</div>
+            </div>
+            <span class="font-bold text-emerald-700 text-sm">{{ r.retorno_base }}%</span>
+          </div>
+          <div class="rent-row" style="border-bottom:none">
+            <div>
+              <span class="text-xs text-gray-500">Escenarios retorno total</span>
+            </div>
+            <span class="text-xs text-gray-600">
+              <span class="text-orange-600">{{ r.retorno_conservador }}%</span>
+              / <span class="text-blue-600">{{ r.retorno_base }}%</span>
+              / <span class="text-green-600">{{ r.retorno_optimista }}%</span>
+            </span>
+          </div>
+          {% endif %}
         </div>
         {% if m.baja_conf_any %}
         <div class="mt-2 flex items-start gap-1.5 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
@@ -328,12 +347,17 @@
         <p class="mt-1 text-gray-500">Descuento plano del 15% sobre ingreso bruto (vacancia + gastos mixtos). Comparación rápida entre sectores.</p>
       </div>
       <div>
-        <div class="font-semibold text-gray-800 mb-1">Cap Rate Institucional</div>
+        <div class="font-semibold text-gray-800 mb-1">Cap Rate Neto (calibrado 2024)</div>
         <code class="block bg-gray-50 rounded px-2 py-1.5 font-mono text-xs">
-          NOI / precio_venta × 100<br>
-          NOI = arr × (1−vac%) − contrib − gastos_op
+          NOI / precio × 100<br>
+          NOI = arr×(1−vac%) − contrib_SII − gastos_op
         </code>
-        <p class="mt-1 text-gray-500">Vacancia según demanda del sector (5-15%). Contribuciones 0.6% del valor. Gastos operacionales 10% del arriendo.</p>
+        <p class="mt-1 text-gray-500">
+          <strong>Vacancia:</strong> 2.5% (alta) / 4.5% (media) / 7.0% (baja demanda).<br>
+          <strong>Contribuciones:</strong> 0.72% valor comercial (SII 1.2% × avalúo 60%).<br>
+          <strong>Gastos autoadmin:</strong> 5.5% arriendo + 0.2% precio (seguro).<br>
+          <strong>Retorno Total</strong> = Cap Rate + Plusvalía (3 escenarios).
+        </p>
       </div>
     </div>
     <div class="mt-4 pt-4 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-gray-500">

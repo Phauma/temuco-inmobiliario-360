@@ -8,7 +8,10 @@ import math
 import random
 import folium
 from folium.plugins import Fullscreen
-from market_data import SECTORES_TEMUCO, SectorData
+from market_data import (
+    SECTORES_TEMUCO, SectorData,
+    VACANCIA_CALIBRADA, CONTRIBUCIONES_SII, GASTOS_OPERACIONALES,
+)
 
 TEMUCO_CENTER = [-38.7394, -72.5986]
 TILE = "CartoDB positron"
@@ -65,11 +68,12 @@ def _cap_rate(s: SectorData) -> float:
     precio_m2 = (s.precio_casa_uf_m2_min + s.precio_casa_uf_m2_max) / 2
     precio    = precio_m2 * 100                         # referencia 100 m²
     arr_anual = s.arriendo_casa_uf_mes_ref * 12
-    vacancia  = {"alta": 0.05, "media": 0.09, "baja": 0.15}.get(s.demanda_arriendo, 0.09)
-    contrib   = precio * 0.006                          # contribuciones ~0.6 % valor comercial/año
-    gastos_op = arr_anual * 0.10                        # admin + mantención: 10 % arriendo anual
+    vacancia  = VACANCIA_CALIBRADA.get(s.demanda_arriendo, VACANCIA_CALIBRADA["media"])
+    contrib   = precio * CONTRIBUCIONES_SII["habitacional"]["efectiva"]  # 0.72% s/valor comercial
+    g         = GASTOS_OPERACIONALES["autoadmin"]
+    gastos_op = arr_anual * g["total_pct_arriendo"] + precio * g["seguro_pct_precio"]
     noi       = arr_anual * (1 - vacancia) - contrib - gastos_op
-    return round(max(noi / precio * 100, 1.0), 1)
+    return round(max(noi / precio * 100, 0.5), 1)
 
 
 def _transacciones_anuales(s: SectorData) -> int:

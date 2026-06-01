@@ -228,14 +228,16 @@ INDICADORES_META = {
         ),
     },
     "cap_rate_neto": {
-        "nombre": "Cap Rate Institucional — NOI (%)",
-        "fuentes_display": "Modelo NOI (precio + arriendo + parámetros)",
+        "nombre": "Cap Rate Neto — NOI calibrado (%)",
+        "fuentes_display": "Modelo NOI calibrado 2024 (precio + arriendo + SII)",
         "tipo_calculo": "Calculado — modelo NOI",
         "advertencia": None,
         "metodologia": (
-            "NOI = arriendo_anual × (1 − vacancia%) − contribuciones (0.6% precio) − gastos_op (10% arriendo). "
-            "Vacancia: alta demanda=5%, media=9%, baja=15%. "
-            "Parámetros de gastos son estimaciones promedio del mercado residencial chileno."
+            "NOI = arriendo_anual × (1 − vacancia%) − contrib_SII − gastos_op. "
+            "Vacancia calibrada: alta=2.5%, media=4.5%, baja=7.0%. "
+            "Contribuciones SII habitacional: 0.72% valor comercial (1.2% × avalúo 60%). "
+            "Gastos autoadmin: 5.5% arriendo + 0.2% precio (seguro). "
+            "Retorno Total = Cap Rate Neto + Plusvalía anual estimada (3 escenarios)."
         ),
     },
     "transacciones_anio": {
@@ -411,13 +413,25 @@ def get_indicadores_sector(sk: str) -> list[dict]:
             "advertencia": None,
         },
         {
-            "indicador":  "Cap Rate Institucional — NOI (%)",
-            "valor":      f"{rent.get('cap_inst', '—')}%  (vacancia {rent.get('vacancia_pct', '—')}%)",
+            "indicador":  "Cap Rate Neto — NOI calibrado (%)",
+            "valor":      (f"{rent.get('cap_inst', '—')}%  "
+                           f"(vac {rent.get('vacancia_pct', '—')}% · contrib 0.72% · gastos_auto)"),
             "fecha":      "Calculado sobre datos 2024",
-            "fuente":     "Modelo NOI (precio + arriendo + parámetros estimados)",
+            "fuente":     "Modelo NOI calibrado SII 2024",
             "n_obs":      n_min,
             "confianza":  _confianza_obs(n_min),
             "advertencia": None,
+        },
+        {
+            "indicador":  "Retorno Total (cap+plusvalía) — escenarios",
+            "valor":      (f"Pesimista {rent.get('retorno_conservador', '—')}%  /  "
+                           f"Base {rent.get('retorno_base', '—')}%  /  "
+                           f"Optimista {rent.get('retorno_optimista', '—')}%"),
+            "fecha":      "Calculado sobre datos 2024",
+            "fuente":     "Modelo NOI + plusvalía estimada",
+            "n_obs":      n_min,
+            "confianza":  _confianza_obs(n_min),
+            "advertencia": "Plusvalía basada en variación de precios publicados, no de cierre (CBR).",
         },
         {
             "indicador":  "Transacciones estimadas / año",

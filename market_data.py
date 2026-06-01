@@ -265,9 +265,8 @@ SECTORES_TEMUCO: dict[str, SectorData] = {
 UF_CLP = 38_000           # UF aproximada en CLP (actualizar según SII)
 INFLACION_ANUAL = 0.045   # inflación promedio Chile
 
-# Cap rates NETOS realistas para Temuco (descontando vacancia, contrib., gastos)
-# Método: NOI = arriendo_anual × (1-vacancia) - contribuciones (0.6% precio) - gastos_op (10% arriendo)
-# Fuente estimada: análisis publicaciones Portal Inmobiliario + Yapo 2023-2024
+# Cap rates NETOS realistas para Temuco (NOI calibrado 2024-2025)
+# Método: NOI = arriendo_anual × (1-vacancia) - contrib_SII - gastos_op
 # NOTA: el mercado residencial chileno tiene cap rates comprimidos por fuerte demanda propietaria.
 # La rentabilidad residencial se sostiene principalmente en plusvalía, no en flujo de arriendo.
 CAP_RATE_REFERENCIA = {
@@ -277,10 +276,68 @@ CAP_RATE_REFERENCIA = {
     "bodega":              (0.050, 0.080),   # neto: 5.0-8.0%
     "oficina_centro":      (0.040, 0.060),   # neto: 4.0-6.0%
 }
+
+# Vacancia calibrada para Temuco (reemplaza valores anteriores de 5/9/15%)
+# Datos base: ratio rotación observado en publicaciones activas 2022-2024
+VACANCIA_CALIBRADA = {
+    "alta":  0.025,   # 2.5% ≈ 9 días/año | Barrio Inglés, Pedro Valdivia, Pueblo Nuevo, Alemania
+    "media": 0.045,   # 4.5% ≈ 16 días/año | Centro, Los Robles, Ricardo Saldías, Santa Rosa
+    "baja":  0.070,   # 7.0% ≈ 26 días/año | Amanecer, Villa Aromos, Padre Las Casas, Labranza
+}
+VACANCIA_JUSTIFICACION = {
+    "alta":  "Demanda universitaria + profesional sostenida. Rotación baja observada.",
+    "media": "Demanda moderada. Vacancia típica del mercado informal chileno.",
+    "baja":  "Sectores periféricos. Mayor dificultad de colocación y rotación alta.",
+    "fuente": "Estimación propia; sin estadísticas oficiales de vacancia disponibles para Temuco.",
+}
+# Alias para compatibilidad con código anterior
 VACANCIA_REFERENCIA = {
-    "alta_demanda": 0.05,    # ~18 días/año sin arrendar
-    "media_demanda": 0.09,   # ~33 días/año
-    "baja_demanda": 0.15,    # ~55 días/año
+    "alta_demanda":  VACANCIA_CALIBRADA["alta"],
+    "media_demanda": VACANCIA_CALIBRADA["media"],
+    "baja_demanda":  VACANCIA_CALIBRADA["baja"],
+}
+
+# Contribuciones SII calibradas para propiedad habitacional arrendada
+# Tasa SII 1.2% s/avalúo fiscal; avalúo fiscal ≈ 60% valor comercial → efectiva 0.72%
+CONTRIBUCIONES_SII = {
+    "habitacional": {
+        "ratio_avaluo": 0.60,
+        "tasa":         0.012,
+        "efectiva":     0.0072,
+        "nota": "SII: 1.2% s/avalúo. Avalúo ≈ 60% valor comercial → 0.72% efectivo.",
+    },
+    "comercial": {
+        "ratio_avaluo": 0.65,
+        "tasa":         0.0158,
+        "efectiva":     0.01027,
+        "nota": "Promedio no habitacional SII. Verificar destino específico.",
+    },
+    "industrial": {
+        "ratio_avaluo": 0.60,
+        "tasa":         0.020,
+        "efectiva":     0.012,
+        "nota": "Industrial/bodega: 2.0% s/avalúo fiscal.",
+    },
+}
+
+# Gastos operacionales por escenario de gestión
+GASTOS_OPERACIONALES = {
+    "autoadmin": {
+        "mantención":         0.035,   # 3.5% arriendo anual
+        "seguro_pct_precio":  0.002,   # 0.2% valor comercial/año
+        "admin_corredor":     0.000,
+        "reserva_reposición": 0.020,   # 2.0% arriendo anual
+        "total_pct_arriendo": 0.055,   # subtotal sobre arriendo (excluye seguro)
+        "descripcion": "Propietario autogestiona. Sin comisión corredora.",
+    },
+    "profesional": {
+        "mantención":         0.035,
+        "seguro_pct_precio":  0.002,
+        "admin_corredor":     0.090,   # 9% arriendo (~1 mes/año ÷ 11 meses efectivos)
+        "reserva_reposición": 0.020,
+        "total_pct_arriendo": 0.145,   # subtotal sobre arriendo (excluye seguro)
+        "descripcion": "Corredora gestiona arriendo. Comisión ~9% anual.",
+    },
 }
 
 # ── Transparencia de fuentes de datos ─────────────────────────────────────────
@@ -496,7 +553,7 @@ METADATA_SECTORES: dict[str, SectorMetadata] = {
 
 
 def calcular_rentabilidades_sector(sk: str) -> dict:
-    """Rentabilidad bruta, neta simplificada y cap rate institucional para un sector."""
+    """Cap rate calibrado, retorno total (3 escenarios) y rentabilidades por sector."""
     sector = SECTORES_TEMUCO.get(sk)
     meta   = METADATA_SECTORES.get(sk)
     if not sector or not meta:
@@ -507,20 +564,61 @@ def calcular_rentabilidades_sector(sk: str) -> dict:
 
     bruto = arr_anual / precio * 100
 
-    # Neta simplificada: descuento plano 15% sobre ingreso bruto
+    # Neta simplificada: descuento plano 15% (referencia rápida)
     neta_simple = arr_anual * 0.85 / precio * 100
 
-    # Cap Rate institucional: NOI estandarizado
-    vacancia  = {"alta": 0.05, "media": 0.09, "baja": 0.15}.get(sector.demanda_arriendo, 0.09)
-    contrib   = precio * 0.006     # contribuciones ~0.6% del valor comercial/año
-    gastos_op = arr_anual * 0.10   # administración + mantención: 10% arriendo/año
-    noi       = arr_anual * (1 - vacancia) - contrib - gastos_op
+    # Vacancia calibrada
+    vacancia = VACANCIA_CALIBRADA.get(sector.demanda_arriendo, VACANCIA_CALIBRADA["media"])
+
+    # Contribuciones SII habitacional: 0.72% valor comercial
+    contrib = precio * CONTRIBUCIONES_SII["habitacional"]["efectiva"]
+
+    # Gastos operacionales — escenario autoadmin
+    g_auto = GASTOS_OPERACIONALES["autoadmin"]
+    gastos_auto = arr_anual * g_auto["total_pct_arriendo"] + precio * g_auto["seguro_pct_precio"]
+
+    # Gastos operacionales — escenario profesional
+    g_prof = GASTOS_OPERACIONALES["profesional"]
+    gastos_prof = arr_anual * g_prof["total_pct_arriendo"] + precio * g_prof["seguro_pct_precio"]
+
+    # NOI por escenario
+    ing_efectivo = arr_anual * (1 - vacancia)
+    noi_auto = ing_efectivo - contrib - gastos_auto
+    noi_prof = ing_efectivo - contrib - gastos_prof
+
+    cap_auto = round(max(noi_auto / precio * 100, 0.5), 2)
+    cap_prof = round(max(noi_prof / precio * 100, 0.5), 2)
+
+    # Cap Rate institucional (autoadmin = referencia principal)
+    cap_inst = cap_auto
+
+    # Retorno Total = Cap Rate Neto + Plusvalía (3 escenarios de plusvalía)
+    plus_pesimista = sector.plusvalia_pesimista_pct
+    plus_base      = sector.plusvalia_anual_pct
+    plus_optimista = sector.plusvalia_optimista_pct
 
     return {
-        "bruto":       round(bruto, 2),
-        "neta_simple": round(neta_simple, 2),
-        "cap_inst":    round(max(noi / precio * 100, 1.0), 2),
-        "vacancia_pct": int(vacancia * 100),
+        # Compatibilidad backward
+        "bruto":        round(bruto, 2),
+        "neta_simple":  round(neta_simple, 2),
+        "cap_inst":     cap_inst,
+        "vacancia_pct": round(vacancia * 100, 1),
+        # Desglose calibrado
+        "cap_auto":     cap_auto,
+        "cap_prof":     cap_prof,
+        "contrib_uf":   round(contrib, 1),
+        "gastos_auto_uf": round(gastos_auto, 1),
+        "gastos_prof_uf": round(gastos_prof, 1),
+        "noi_auto_uf":  round(noi_auto, 1),
+        "noi_prof_uf":  round(noi_prof, 1),
+        "ing_efectivo_uf": round(ing_efectivo, 1),
+        # Retorno Total (cap_auto + plusvalía)
+        "retorno_conservador": round(cap_auto + plus_pesimista, 2),
+        "retorno_base":        round(cap_auto + plus_base, 2),
+        "retorno_optimista":   round(cap_auto + plus_optimista, 2),
+        "plusvalia_base":      plus_base,
+        "plusvalia_pesimista": plus_pesimista,
+        "plusvalia_optimista": plus_optimista,
     }
 
 
