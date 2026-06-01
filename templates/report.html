@@ -518,6 +518,104 @@
     </div>
   </div>
 
+  <!-- Tabla de factores verificables -->
+  {% if r.factores_verificables %}
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-5">
+    <h2 class="text-sm font-bold text-gray-700 uppercase tracking-widest mb-1 pb-2 border-b border-gray-100">
+      <i class="fas fa-microscope mr-2 text-blue-600"></i>Análisis de Factores con Evidencia Verificable
+    </h2>
+    <p class="text-xs text-gray-500 mb-4">
+      Cada factor está clasificado por estado de verificación y nivel de confianza.
+      Solo se citan fuentes oficiales públicas. Las proyecciones sin respaldo están marcadas explícitamente.
+    </p>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm border-collapse">
+        <thead>
+          <tr class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
+            <th class="text-left px-3 py-2 font-semibold border-b border-gray-200">Factor</th>
+            <th class="text-left px-3 py-2 font-semibold border-b border-gray-200">Impacto</th>
+            <th class="text-center px-3 py-2 font-semibold border-b border-gray-200">Estado</th>
+            <th class="text-center px-3 py-2 font-semibold border-b border-gray-200">Confianza</th>
+            <th class="text-left px-3 py-2 font-semibold border-b border-gray-200">Fuente</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in r.factores_verificables %}
+          {% set estado_config = {
+            'confirmado':      ('🟢', 'bg-green-50 text-green-700 border-green-200',  'Confirmado'),
+            'en_desarrollo':   ('🟡', 'bg-yellow-50 text-yellow-700 border-yellow-200', 'En desarrollo'),
+            'en_evaluacion':   ('🟠', 'bg-orange-50 text-orange-700 border-orange-200', 'En evaluación'),
+            'hipotesis':       ('🔴', 'bg-red-50 text-red-700 border-red-200',        'Hipótesis'),
+          } %}
+          {% set impacto_config = {
+            'positivo_alto':   ('▲▲', 'text-green-700 font-bold'),
+            'positivo_medio':  ('▲',  'text-green-600 font-semibold'),
+            'positivo_bajo':   ('▲',  'text-green-500'),
+            'neutro':          ('—',  'text-gray-400'),
+            'negativo_bajo':   ('▼',  'text-red-400'),
+            'negativo_medio':  ('▼',  'text-red-500 font-semibold'),
+            'negativo_alto':   ('▼▼', 'text-red-700 font-bold'),
+          } %}
+          {% set emoji, badge_cls, estado_label = estado_config.get(f.estado.value, ('🔴','bg-red-50 text-red-700 border-red-200','Hipótesis')) %}
+          {% set imp_arrow, imp_cls = impacto_config.get(f.impacto.value, ('—','text-gray-400')) %}
+          <tr class="border-b border-gray-50 hover:bg-gray-50 transition align-top
+            {% if f.advertencia %}bg-red-50/30{% endif %}">
+            <td class="px-3 py-3">
+              <div class="font-semibold text-gray-800 text-sm">{{ f.factor }}</div>
+              <div class="text-xs text-gray-500 mt-0.5 leading-relaxed">{{ f.descripcion }}</div>
+              {% if f.advertencia %}
+              <div class="mt-1 text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1">
+                <i class="fas fa-exclamation-triangle mr-1"></i>{{ f.advertencia }}
+              </div>
+              {% endif %}
+            </td>
+            <td class="px-3 py-3">
+              <span class="{{ imp_cls }} text-base">{{ imp_arrow }}</span>
+              <div class="text-xs text-gray-500 mt-0.5">{{ f.impacto.value.replace('_', ' ').title() }}</div>
+            </td>
+            <td class="px-3 py-3 text-center">
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border {{ badge_cls }}">
+                {{ emoji }} {{ estado_label }}
+              </span>
+            </td>
+            <td class="px-3 py-3 text-center">
+              <div class="font-bold text-sm
+                {% if f.confianza_pct >= 70 %}text-green-600
+                {% elif f.confianza_pct >= 50 %}text-yellow-600
+                {% else %}text-red-500{% endif %}">
+                {{ f.confianza_pct }}%
+              </div>
+              <div class="w-16 mx-auto bg-gray-200 rounded-full h-1.5 mt-1">
+                <div class="h-1.5 rounded-full
+                  {% if f.confianza_pct >= 70 %}bg-green-500
+                  {% elif f.confianza_pct >= 50 %}bg-yellow-500
+                  {% else %}bg-red-500{% endif %}"
+                  style="width:{{ f.confianza_pct }}%"></div>
+              </div>
+            </td>
+            <td class="px-3 py-3">
+              <div class="text-xs text-gray-600 leading-relaxed">{{ f.fuente }}</div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Leyenda de estados -->
+    <div class="mt-4 flex flex-wrap gap-3 text-xs text-gray-500">
+      <span>🟢 <strong>Confirmado</strong> — fuente oficial documentada</span>
+      <span>🟡 <strong>En desarrollo</strong> — antecedentes oficiales, sin concluir</span>
+      <span>🟠 <strong>En evaluación</strong> — propuesta o estudio en proceso</span>
+      <span>🔴 <strong>Hipótesis</strong> — inferencia sin fuente pública verificable</span>
+    </div>
+    <div class="mt-2 text-xs text-gray-400 italic">
+      Fuentes aceptadas: MOP · MINVU · SERVIU · MINSAL · Gobierno Regional · Municipalidad · Plan Regulador · SII · CBR · INE · Universidades oficiales
+    </div>
+  </div>
+  {% endif %}
+
   <!-- Comparables -->
   {% if r.comparables %}
   <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-5">

@@ -49,6 +49,33 @@ class Recomendacion(str, Enum):
     DESCARTAR = "descartar"
 
 
+class EstadoFactor(str, Enum):
+    CONFIRMADO = "confirmado"
+    EN_DESARROLLO = "en_desarrollo"
+    EN_EVALUACION = "en_evaluacion"
+    HIPOTESIS = "hipotesis"
+
+
+class ImpactoFactor(str, Enum):
+    POSITIVO_ALTO = "positivo_alto"
+    POSITIVO_MEDIO = "positivo_medio"
+    POSITIVO_BAJO = "positivo_bajo"
+    NEUTRO = "neutro"
+    NEGATIVO_BAJO = "negativo_bajo"
+    NEGATIVO_MEDIO = "negativo_medio"
+    NEGATIVO_ALTO = "negativo_alto"
+
+
+class FactorVerificable(BaseModel):
+    factor: str
+    descripcion: str
+    impacto: ImpactoFactor
+    estado: EstadoFactor
+    confianza_pct: int = Field(..., ge=0, le=100)
+    fuente: str
+    advertencia: Optional[str] = None
+
+
 class ObjetivoAnalisis(str, Enum):
     COMPRA = "compra"
     VENTA = "venta"
@@ -197,6 +224,9 @@ class AnalysisResult(BaseModel):
     analisis_zona: str
     analisis_mercado: str
     analisis_financiero: str
+
+    # Factores verificables (tabla de evidencia)
+    factores_verificables: list[FactorVerificable] = []
 
     # Mapa HTML (generado por Folium)
     mapa_html: Optional[str] = None

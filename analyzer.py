@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 from models import (
     PropertyInput, AnalysisResult, ScoreDetalle, ComparableActivo,
     NivelRiesgo, Liquidez, Recomendacion, TipoPropiedad,
+    FactorVerificable, ImpactoFactor, EstadoFactor,
 )
 from market_data import SECTORES_TEMUCO, calcular_precio_m2_referencia
 from scorer import calcular_score, label_score
@@ -109,6 +110,35 @@ ESTRATEGIA NEGOCIACIÓN CHILE:
 - >90 días en mercado → propietario más flexible (-15-20%)
 - Escritura rápida (30-45 días) como argumento de cierre
 
+ANÁLISIS BASADO EN EVIDENCIA — PROTOCOLO OBLIGATORIO:
+
+Para cada factor relevante (plusvalía, infraestructura, transporte, salud, educación, normativa,
+desarrollo urbano, crecimiento económico), clasifica con rigor:
+
+🟢 CONFIRMADO: existe documento público oficial que lo respalda directamente.
+🟡 EN DESARROLLO: hay antecedentes oficiales pero no está concluido ni garantizado.
+🟠 EN EVALUACIÓN: existen estudios o propuestas en proceso, sin resolución.
+🔴 HIPÓTESIS: inferencia del modelo sin fuente pública verificable.
+
+Fuentes aceptables (únicas): MOP, MINVU, SERVIU, MINSAL, Gobierno Regional de La Araucanía,
+Municipalidad de Temuco, Plan Regulador Comunal, SII, CBR, INE, universidades oficiales,
+documentos públicos o decretos.
+
+LENGUAJE PROHIBIDO — nunca uses:
+- "garantiza plusvalía", "inversión segura", "aumentará su valor", "sin duda", "certeza"
+
+LENGUAJE OBLIGATORIO en su lugar:
+- "podría favorecer", "existe potencial de", "podría influir positivamente",
+  "es consistente con escenarios de crecimiento", "según datos disponibles"
+
+Si confianza < 50%: agrega advertencia explícita: "Este factor corresponde a una proyección o
+hipótesis y no debe utilizarse como fundamento principal para una decisión de inversión."
+
+Si no existe fuente verificable: escribe exactamente: "Sin evidencia pública verificable al momento del análisis."
+
+Genera entre 4 y 8 factores relevantes para la propiedad analizada, priorizando los que más
+impactan la decisión de inversión o venta.
+
 Entrega análisis concreto, honesto y basado en datos verificables. Cuando no tengas datos suficientes, dilo explícitamente."""
 
 
@@ -166,6 +196,23 @@ ANALYSIS_TOOL = {
             "analisis_zona": {"type": "string", "description": "Análisis del sector/barrio (4-6 oraciones)"},
             "analisis_mercado": {"type": "string", "description": "Análisis de mercado y comparables (4-6 oraciones)"},
             "analisis_financiero": {"type": "string", "description": "Análisis financiero de inversión (4-6 oraciones)"},
+            "factores_verificables": {
+                "type": "array",
+                "description": "Tabla de factores con evidencia verificable. Entre 4 y 8 factores.",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "factor": {"type": "string", "description": "Nombre corto del factor (ej: 'Hospital Regional Nuevo')"},
+                        "descripcion": {"type": "string", "description": "Descripción objetiva del factor y su relación con la propiedad"},
+                        "impacto": {"type": "string", "enum": ["positivo_alto","positivo_medio","positivo_bajo","neutro","negativo_bajo","negativo_medio","negativo_alto"]},
+                        "estado": {"type": "string", "enum": ["confirmado","en_desarrollo","en_evaluacion","hipotesis"]},
+                        "confianza_pct": {"type": "integer", "minimum": 0, "maximum": 100, "description": "% de confianza en el factor"},
+                        "fuente": {"type": "string", "description": "Fuente oficial o 'Sin evidencia pública verificable al momento del análisis.'"},
+                        "advertencia": {"type": "string", "description": "Completar si confianza_pct < 50, de lo contrario dejar vacío"}
+                    },
+                    "required": ["factor","descripcion","impacto","estado","confianza_pct","fuente"]
+                }
+            },
         },
         "required": [
             "valor_mercado_uf", "rango_conservador_uf", "rango_base_uf", "rango_optimista_uf",
@@ -186,6 +233,7 @@ ANALYSIS_TOOL = {
             "argumentos_venta", "riesgos_principales", "oportunidades",
             "estrategia_negociacion",
             "resumen_ejecutivo", "analisis_zona", "analisis_mercado", "analisis_financiero",
+            "factores_verificables",
         ],
     },
 }
@@ -278,6 +326,32 @@ def _build_user_message(prop: PropertyInput, sector_data, comparables: list, sii
     ]
 
     return "\n".join(lines)
+
+
+def _parse_factores(raw: list) -> list[FactorVerificable]:
+    factores = []
+    for f in raw:
+        if not isinstance(f, dict):
+            continue
+        try:
+            confianza = int(f.get("confianza_pct", 50))
+            advertencia = f.get("advertencia") or (
+                "Este factor corresponde a una proyección o hipótesis y no debe "
+                "utilizarse como fundamento principal para una decisión de inversión."
+                if confianza < 50 else None
+            )
+            factores.append(FactorVerificable(
+                factor=f.get("factor", ""),
+                descripcion=f.get("descripcion", ""),
+                impacto=ImpactoFactor(f.get("impacto", "neutro")),
+                estado=EstadoFactor(f.get("estado", "hipotesis")),
+                confianza_pct=confianza,
+                fuente=f.get("fuente") or "Sin evidencia pública verificable al momento del análisis.",
+                advertencia=advertencia,
+            ))
+        except Exception:
+            continue
+    return factores
 
 
 async def analizar_propiedad(
@@ -409,4 +483,5 @@ async def analizar_propiedad(
         analisis_zona=d.get("analisis_zona", ""),
         analisis_mercado=d.get("analisis_mercado", ""),
         analisis_financiero=d.get("analisis_financiero", ""),
+        factores_verificables=_parse_factores(d.get("factores_verificables", [])),
     )
