@@ -22,6 +22,7 @@ from scrapers.portal_scraper import buscar_comparables
 from scrapers.sii_client import consultar_avaluo
 from geo_map import generar_mapa_propiedad, generar_mapa_calor
 from database import guardar_analisis, listar_analisis, obtener_analisis
+from sii_nomina import lookup_rol, estadisticas_nomina
 
 load_dotenv()
 
@@ -269,6 +270,51 @@ async def transparencia_datos(request: Request):
         "sectores_baja_conf": sectores_baja_conf,
         "ahora": datetime.now().strftime("%d/%m/%Y %H:%M"),
     })
+
+
+@app.get("/api/sii/{rol}")
+async def api_sii_rol(rol: str):
+    """
+    Consulta datos de una propiedad por Rol SII.
+    Primero busca en la nómina local (instantáneo).
+    Si no encuentra, intenta scraping del sitio SII (lento, requiere Internet).
+    """
+    # 1. Búsqueda en nómina local
+    resultado = lookup_rol(rol)
+    if resultado:
+        return JSONResponse(resultado)
+
+    # 2. Fallback: scraping SII web
+    try:
+        from scrapers.sii_client import consultar_avaluo
+        sii_data = await consultar_avaluo(rol)
+        if sii_data:
+            return JSONResponse({
+                "found": True,
+                "rol": rol,
+                "direccion": None,
+                "destino": sii_data.get("destino"),
+                "sup_construida_m2": sii_data.get("superficie_construida_m2"),
+                "sup_terreno_m2": sii_data.get("superficie_terreno_m2"),
+                "av_total_uf": sii_data.get("avaluo_fiscal_uf"),
+                "av_total_clp": None,
+                "contrib_anual_uf": sii_data.get("contribuciones_anuales_uf"),
+                "contrib_anual_clp": None,
+                "estado": "Vigente",
+                "fuente": "sii_web",
+                "fecha_carga": None,
+                "uf_carga": None,
+            })
+    except Exception:
+        pass
+
+    return JSONResponse({"found": False, "rol": rol})
+
+
+@app.get("/api/sii-stats")
+async def api_sii_stats():
+    """Estado de la nómina SII local."""
+    return JSONResponse(estadisticas_nomina())
 
 
 @app.get("/api/sectores")
