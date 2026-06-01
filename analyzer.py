@@ -46,7 +46,18 @@ CONTEXTO DEL MERCADO TEMUCO (datos 2024-2025):
 - Demanda universitaria (UFRO, UCT, UCTEM), hospitales, sector público y comercio.
 - Moneda: UF (Unidad de Fomento). 1 UF ≈ $38.000 CLP.
 - Contribuciones: 0.42%-1.2% del avalúo fiscal anual según destino SII.
-- Brecha publicación/cierre histórica Temuco: 8-15%.
+- Brecha publicación/cierre histórica Temuco: varía por sector (ver tabla abajo).
+
+DESCUENTOS TÍPICOS PUBLICACIÓN → PRECIO REAL DE CIERRE (calibrado 2024):
+- Barrio Inglés / Pedro de Valdivia: casas −6.0–6.5% | deptos −5.0–5.5%
+- Pueblo Nuevo / Av. Alemania: casas −7.5–8.0% | deptos −6.5–7.0%
+- Centro: casas −9.0% | deptos −7.5%
+- Los Robles / Santa Rosa / Ricardo Saldías: casas −10.5–11.0% | deptos −9.0–10.0%
+- Amanecer / Ñielol: casas −12.5% | deptos −11.5%
+- Villa Aromos / Padre Las Casas: casas −14.0–15.5% | deptos −13.0–14.0%
+- Labranza: casas −17.0% | deptos −16.0%
+Usa estos valores para calcular precio_cierre_probable_uf y descuento_probable_pct. Si el sector es premium
+y la propiedad está bien valuada, el descuento real tiende al extremo inferior del rango.
 
 ARRIENDOS REALES EN TEMUCO (valores calibrados 2024):
 Expresa el arriendo mensual en UF según superficie real de la propiedad, NO como UF/m².

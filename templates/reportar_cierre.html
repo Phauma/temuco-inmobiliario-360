@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Precios de Cierre — Temuco Inmobiliario 360</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    .gradient-header { background: linear-gradient(135deg, #1e3a5f 0%, #2d6a4f 100%); }
+    .input-field { @apply w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500; }
+    .label { @apply block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<header class="gradient-header text-white shadow-lg">
+  <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <i class="fas fa-building text-2xl text-emerald-300"></i>
+      <div>
+        <h1 class="text-xl font-bold">Temuco Inmobiliario 360</h1>
+        <p class="text-xs text-blue-200">Precios de Cierre Reportados</p>
+      </div>
+    </div>
+    <nav class="flex gap-4 text-sm">
+      <a href="/" class="text-white hover:text-emerald-300 transition"><i class="fas fa-home mr-1"></i>Inicio</a>
+      <a href="/historial" class="text-white hover:text-emerald-300 transition"><i class="fas fa-history mr-1"></i>Historial</a>
+      <a href="/cierres" class="text-emerald-300 font-semibold"><i class="fas fa-handshake mr-1"></i>Cierres</a>
+      <a href="/transparencia" class="text-white hover:text-emerald-300 transition"><i class="fas fa-database mr-1"></i>Transparencia</a>
+    </nav>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 py-8">
+
+  {% if mensaje_ok %}
+  <div class="bg-green-50 border border-green-200 rounded-xl px-5 py-3 mb-5 flex items-center gap-3">
+    <i class="fas fa-check-circle text-green-500 text-xl"></i>
+    <div>
+      <p class="text-green-800 font-semibold">Cierre registrado correctamente.</p>
+      <p class="text-green-700 text-sm">Gracias por contribuir. Los datos ayudan a calibrar el mercado para todos.</p>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Formulario -->
+    <div class="lg:col-span-2">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-5">
+        <h2 class="text-sm font-bold text-gray-700 uppercase tracking-widest mb-1 pb-2 border-b border-gray-100">
+          <i class="fas fa-plus-circle mr-2 text-teal-500"></i>Reportar Precio de Cierre Real
+        </h2>
+        <p class="text-xs text-gray-500 mb-4">
+          Registra transacciones reales que conoces (como corredor, comprador, vendedor o notario).
+          Los datos se usan para calibrar los benchmarks del sector. No requiere precio exacto — una estimación es útil.
+        </p>
+
+        <form method="POST" action="/cierres">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+
+            <div>
+              <label class="label">Sector *</label>
+              <select name="sector" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" required>
+                <option value="">— Seleccionar —</option>
+                {% for key, nombre in sectores %}
+                <option value="{{ key }}" {% if filtro_sector == key %}selected{% endif %}>{{ nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div>
+              <label class="label">Tipo de Propiedad *</label>
+              <select name="tipo_propiedad" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" required>
+                <option value="">— Seleccionar —</option>
+                {% for val, label in tipos %}
+                <option value="{{ val }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div>
+              <label class="label">Superficie útil/construida (m²) *</label>
+              <input type="number" name="superficie_m2" step="0.5" min="10" max="5000"
+                     placeholder="Ej: 95" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" required>
+            </div>
+
+            <div>
+              <label class="label">
+                Precio de Cierre (UF) *
+                <span class="text-teal-600 normal-case font-normal ml-1">— el precio final escriturado</span>
+              </label>
+              <input type="number" name="precio_cierre_uf" step="0.5" min="1"
+                     placeholder="Ej: 3200" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 font-semibold" required>
+            </div>
+
+            <div>
+              <label class="label">Precio Publicado/Oferta (UF) <span class="text-gray-400 font-normal normal-case ml-1">— opcional</span></label>
+              <input type="number" name="precio_publicado_uf" step="0.5" min="1"
+                     placeholder="Ej: 3500 (permite calcular descuento)"
+                     class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+            </div>
+
+            <div>
+              <label class="label">Fecha de Cierre <span class="text-gray-400 font-normal normal-case ml-1">— opcional</span></label>
+              <input type="date" name="fecha_cierre"
+                     class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+            </div>
+
+            <div>
+              <label class="label">Dormitorios <span class="text-gray-400 font-normal normal-case ml-1">— opcional</span></label>
+              <input type="number" name="dormitorios" min="0" max="20" placeholder="Ej: 3"
+                     class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+            </div>
+
+            <div>
+              <label class="label">Año Construcción <span class="text-gray-400 font-normal normal-case ml-1">— opcional</span></label>
+              <input type="number" name="anio_construccion" min="1900" max="2025" placeholder="Ej: 2008"
+                     class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+            </div>
+
+            <div>
+              <label class="label">Estado Conservación <span class="text-gray-400 font-normal normal-case ml-1">— opcional</span></label>
+              <select name="estado_conservacion" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+                <option value="">— Seleccionar —</option>
+                <option value="nuevo">Nuevo / Estreno</option>
+                <option value="excelente">Excelente</option>
+                <option value="bueno">Bueno</option>
+                <option value="regular">Regular</option>
+                <option value="malo">Malo</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="label">Referencia Dirección <span class="text-gray-400 font-normal normal-case ml-1">— opcional, sin datos personales</span></label>
+              <input type="text" name="direccion_ref" placeholder="Ej: calle Los Aromos, sector norte"
+                     class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="label">Notas adicionales <span class="text-gray-400 font-normal normal-case ml-1">— opcional</span></label>
+            <textarea name="notas" rows="2" placeholder="Propiedad remodelada, venta urgente, negociación larga, precio GGCC incluidos..."
+                      class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"></textarea>
+          </div>
+
+          <button type="submit"
+            class="w-full bg-gradient-to-r from-teal-600 to-emerald-600 text-white font-bold py-3 rounded-xl
+                   hover:from-teal-700 hover:to-emerald-700 transition-all shadow flex items-center justify-center gap-2">
+            <i class="fas fa-save"></i>Registrar Cierre
+          </button>
+        </form>
+      </div>
+
+      <!-- Tabla de cierres -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
+          <h2 class="text-sm font-bold text-gray-700 uppercase tracking-widest">
+            <i class="fas fa-table mr-2 text-blue-500"></i>Cierres Registrados
+            <span class="text-gray-400 font-normal normal-case ml-2">({{ total_cierres }} total)</span>
+          </h2>
+          <!-- Filtros -->
+          <form method="GET" action="/cierres" class="flex gap-2">
+            <select name="sector" class="border border-gray-300 rounded-lg px-2 py-1 text-xs">
+              <option value="">Todos los sectores</option>
+              {% for key, nombre in sectores %}
+              <option value="{{ key }}" {% if filtro_sector == key %}selected{% endif %}>{{ nombre }}</option>
+              {% endfor %}
+            </select>
+            <select name="tipo" class="border border-gray-300 rounded-lg px-2 py-1 text-xs">
+              <option value="">Todos los tipos</option>
+              {% for val, label in tipos %}
+              <option value="{{ val }}" {% if filtro_tipo == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+            <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded-lg text-xs font-semibold hover:bg-blue-700">
+              Filtrar
+            </button>
+          </form>
+        </div>
+
+        {% if lista %}
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs">
+            <thead>
+              <tr class="bg-gray-50 text-gray-500 uppercase tracking-wide border-b border-gray-200">
+                <th class="text-left px-3 py-2 font-semibold">Sector</th>
+                <th class="text-left px-3 py-2 font-semibold">Tipo</th>
+                <th class="text-right px-3 py-2 font-semibold">Sup. m²</th>
+                <th class="text-right px-3 py-2 font-semibold text-teal-700">Cierre UF</th>
+                <th class="text-right px-3 py-2 font-semibold text-teal-700">UF/m²</th>
+                <th class="text-right px-3 py-2 font-semibold">Pub. UF</th>
+                <th class="text-right px-3 py-2 font-semibold text-orange-600">Dcto %</th>
+                <th class="text-center px-3 py-2 font-semibold">Dorm</th>
+                <th class="text-center px-3 py-2 font-semibold">Fecha</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for c in lista %}
+              <tr class="border-b border-gray-50 hover:bg-gray-50">
+                <td class="px-3 py-2 text-gray-700">
+                  {{ sectores | selectattr(0, 'equalto', c.sector) | map(attribute=1) | first | default(c.sector) }}
+                </td>
+                <td class="px-3 py-2 capitalize text-gray-600">{{ c.tipo_propiedad }}</td>
+                <td class="px-3 py-2 text-right text-gray-700">{{ c.superficie_m2 | int }}</td>
+                <td class="px-3 py-2 text-right font-bold text-teal-700">{{ "%.0f"|format(c.precio_cierre_uf) }}</td>
+                <td class="px-3 py-2 text-right font-semibold text-teal-600">
+                  {% if c.precio_m2_cierre_uf %}{{ "%.1f"|format(c.precio_m2_cierre_uf) }}{% else %}—{% endif %}
+                </td>
+                <td class="px-3 py-2 text-right text-gray-500">
+                  {% if c.precio_publicado_uf %}{{ "%.0f"|format(c.precio_publicado_uf) }}{% else %}—{% endif %}
+                </td>
+                <td class="px-3 py-2 text-right">
+                  {% if c.descuento_pct %}
+                  <span class="font-semibold {% if c.descuento_pct > 10 %}text-red-600{% else %}text-orange-500{% endif %}">
+                    −{{ "%.1f"|format(c.descuento_pct) }}%
+                  </span>
+                  {% else %}—{% endif %}
+                </td>
+                <td class="px-3 py-2 text-center text-gray-600">{{ c.dormitorios or '—' }}</td>
+                <td class="px-3 py-2 text-center text-gray-400">{{ c.fecha_cierre or c.fecha_registro or '—' }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-400 italic text-center py-8">
+          <i class="fas fa-inbox block text-3xl mb-2 text-gray-300"></i>
+          Aún no hay cierres registrados{% if filtro_sector %} para este filtro{% endif %}.<br>
+          <span class="text-xs">Sé el primero en contribuir.</span>
+        </p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-5">
+
+      <!-- Stats globales -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <h3 class="text-sm font-bold text-gray-700 uppercase tracking-widest mb-3 pb-2 border-b border-gray-100">
+          <i class="fas fa-chart-pie mr-2 text-teal-500"></i>Base de Datos
+        </h3>
+        <div class="text-center py-3">
+          <div class="text-4xl font-bold text-teal-600">{{ global_stats.total }}</div>
+          <div class="text-xs text-gray-500 mt-1">cierres registrados</div>
+        </div>
+        {% if global_stats.por_sector %}
+        <div class="mt-3 space-y-1">
+          {% for sector_k, cnt in global_stats.por_sector.items() | sort(attribute=1, reverse=True) %}
+          <div class="flex justify-between text-xs py-1 border-b border-gray-50">
+            <span class="text-gray-600">
+              {{ sectores | selectattr(0, 'equalto', sector_k) | map(attribute=1) | first | default(sector_k) }}
+            </span>
+            <span class="font-semibold text-teal-700">{{ cnt }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Estadísticas del filtro activo -->
+      {% if stats %}
+      <div class="bg-teal-50 border border-teal-200 rounded-xl p-5">
+        <h3 class="text-sm font-bold text-teal-800 uppercase tracking-widest mb-3 pb-2 border-b border-teal-200">
+          <i class="fas fa-calculator mr-2"></i>Estadísticas del Sector
+        </h3>
+        <div class="space-y-2">
+          <div class="flex justify-between text-sm">
+            <span class="text-teal-700">Registros</span>
+            <span class="font-bold text-teal-900">{{ stats.n }}</span>
+          </div>
+          <div class="flex justify-between text-sm border-t border-teal-100 pt-2">
+            <span class="text-teal-700">Promedio UF/m²</span>
+            <span class="font-bold text-teal-900 text-lg">{{ "%.1f"|format(stats.precio_m2_promedio) }}</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-teal-700">Mediana UF/m²</span>
+            <span class="font-semibold text-teal-800">{{ "%.1f"|format(stats.precio_m2_mediana) }}</span>
+          </div>
+          <div class="flex justify-between text-xs text-gray-500">
+            <span>Rango</span>
+            <span>{{ "%.1f"|format(stats.precio_m2_min) }} – {{ "%.1f"|format(stats.precio_m2_max) }} UF/m²</span>
+          </div>
+          {% if stats.descuento_promedio_pct %}
+          <div class="flex justify-between text-sm border-t border-teal-100 pt-2">
+            <span class="text-teal-700">Descuento promedio</span>
+            <span class="font-bold text-orange-600">−{{ "%.1f"|format(stats.descuento_promedio_pct) }}%</span>
+          </div>
+          {% endif %}
+          <p class="text-xs text-teal-600 mt-1">Últimos {{ stats.meses_cobertura }} meses</p>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Qué es esto -->
+      <div class="bg-blue-50 border border-blue-100 rounded-xl p-5">
+        <h3 class="text-sm font-bold text-blue-800 mb-2">
+          <i class="fas fa-info-circle mr-2"></i>¿Para qué sirve?
+        </h3>
+        <p class="text-xs text-blue-700 leading-relaxed">
+          El precio de cierre real es el dato más valioso del mercado y no existe en ninguna fuente pública de Chile.
+          CBR solo muestra el tipo de acto, SII tiene el avalúo fiscal, los portales muestran precio de oferta.
+        </p>
+        <p class="text-xs text-blue-700 leading-relaxed mt-2">
+          Con <strong>10+ cierres por sector</strong> podemos calibrar el descuento real publicación→escritura y
+          dar recomendaciones mucho más precisas de precio máximo de compra.
+        </p>
+        <p class="text-xs text-blue-600 mt-3 italic">
+          Los datos se usan solo para estadísticas sectoriales anónimas, nunca en forma individual.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+</body>
+</html>

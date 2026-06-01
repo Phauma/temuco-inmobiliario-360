@@ -26,6 +26,7 @@
     <div class="flex items-center gap-3">
       <a href="/" class="text-sm text-blue-200 hover:text-white"><i class="fas fa-plus mr-1"></i>Nuevo análisis</a>
       <a href="/historial" class="text-sm text-blue-200 hover:text-white"><i class="fas fa-history mr-1"></i>Historial</a>
+      <a href="/cierres" class="text-sm text-blue-200 hover:text-white"><i class="fas fa-handshake mr-1"></i>Cierres</a>
       <button onclick="window.print()" class="bg-white text-blue-800 text-sm px-3 py-1 rounded-lg font-semibold hover:bg-blue-50">
         <i class="fas fa-print mr-1"></i>Imprimir
       </button>
@@ -309,6 +310,93 @@
       {% endif %}
     </div>
   </div>
+
+  <!-- Precio de Cierre en el Sector -->
+  {% if r.cierre_sector_benchmark or r.cierre_sector_local %}
+  <div class="bg-white rounded-xl shadow-sm border border-teal-200 p-5 mb-5">
+    <h2 class="text-sm font-bold text-gray-700 uppercase tracking-widest mb-4 pb-2 border-b border-gray-100">
+      <i class="fas fa-handshake mr-2 text-teal-500"></i>Precio de Cierre en el Sector
+      <a href="/cierres" class="ml-3 text-xs font-normal normal-case text-teal-600 hover:underline">
+        <i class="fas fa-plus mr-1"></i>Reportar cierre
+      </a>
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      <!-- Benchmark estadístico (Opción A) -->
+      {% if r.cierre_sector_benchmark %}
+      {% set bm = r.cierre_sector_benchmark %}
+      <div class="bg-teal-50 border border-teal-200 rounded-xl p-4">
+        <div class="text-xs text-teal-600 font-bold uppercase tracking-wider mb-2">
+          Benchmark Estadístico — {{ bm.tipo | title }}s en el sector
+        </div>
+        <div class="flex items-end gap-3 mb-3">
+          <div>
+            <div class="text-xs text-gray-500">Precio publicación (mediana)</div>
+            {% if bm.precio_m2_publicacion %}
+            <div class="text-xl font-bold text-gray-700">{{ "%.1f"|format(bm.precio_m2_publicacion) }} <span class="text-sm font-normal">UF/m²</span></div>
+            {% else %}
+            <div class="text-lg font-bold text-gray-500">—</div>
+            {% endif %}
+          </div>
+          <div class="text-2xl text-gray-300 mb-1">→</div>
+          <div>
+            <div class="text-xs text-teal-600 font-semibold">Estimado de cierre</div>
+            <div class="text-2xl font-bold text-teal-700">{{ "%.1f"|format(bm.precio_m2_cierre) }} <span class="text-base font-normal">UF/m²</span></div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="bg-orange-100 text-orange-700 font-bold text-sm px-3 py-1 rounded-full">
+            −{{ "%.1f"|format(bm.descuento_pct) }}% vs. publicación
+          </span>
+        </div>
+        <p class="text-xs text-gray-400 mt-2">{{ bm.fuente }}</p>
+      </div>
+      {% endif %}
+
+      <!-- Cierres reportados (Opción B) -->
+      {% if r.cierre_sector_local %}
+      {% set loc = r.cierre_sector_local %}
+      <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+        <div class="text-xs text-emerald-600 font-bold uppercase tracking-wider mb-2">
+          <i class="fas fa-users mr-1"></i>Cierres Reportados — {{ loc.n }} transacciones
+          <span class="text-gray-400 font-normal ml-1">(últimos {{ loc.meses_cobertura }} meses)</span>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-3">
+          <div class="bg-white rounded-lg p-3 text-center">
+            <div class="text-xs text-gray-400">Promedio</div>
+            <div class="text-xl font-bold text-emerald-700">{{ "%.1f"|format(loc.precio_m2_promedio) }}</div>
+            <div class="text-xs text-gray-400">UF/m²</div>
+          </div>
+          <div class="bg-white rounded-lg p-3 text-center">
+            <div class="text-xs text-gray-400">Mediana</div>
+            <div class="text-xl font-bold text-emerald-600">{{ "%.1f"|format(loc.precio_m2_mediana) }}</div>
+            <div class="text-xs text-gray-400">UF/m²</div>
+          </div>
+        </div>
+        <div class="text-xs text-gray-500">
+          Rango: {{ "%.1f"|format(loc.precio_m2_min) }} – {{ "%.1f"|format(loc.precio_m2_max) }} UF/m²
+          {% if loc.descuento_promedio_pct %}
+          · Dcto promedio: <strong class="text-orange-600">−{{ "%.1f"|format(loc.descuento_promedio_pct) }}%</strong>
+          {% endif %}
+        </div>
+        <p class="text-xs text-emerald-600 font-semibold mt-2">
+          <i class="fas fa-star mr-1"></i>Dato real verificado por usuarios de la plataforma
+        </p>
+      </div>
+      {% else %}
+      <div class="bg-gray-50 border border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center text-center">
+        <i class="fas fa-users text-2xl text-gray-300 mb-2"></i>
+        <p class="text-xs text-gray-500 font-semibold">Sin cierres reportados para este sector aún</p>
+        <p class="text-xs text-gray-400 mt-1">Con 3+ registros aparecen estadísticas reales aquí.</p>
+        <a href="/cierres" class="mt-3 bg-teal-600 text-white text-xs font-semibold px-4 py-2 rounded-lg hover:bg-teal-700 transition">
+          <i class="fas fa-plus mr-1"></i>Reportar cierre
+        </a>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+  {% endif %}
 
   <!-- Score breakdown -->
   <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-5">

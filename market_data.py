@@ -39,6 +39,9 @@ class SectorData:
     longitud: float
     indice_velocidad_venta: int      # 0-100: 100=vende muy rápido
     radio_km: float = 0.8
+    # Descuento típico publicación → precio real de cierre (calibrado por liquidez y sector)
+    descuento_cierre_casa_pct: float = 10.0
+    descuento_cierre_depto_pct: float = 8.5
 
 
 SECTORES_TEMUCO: dict[str, SectorData] = {
@@ -59,6 +62,7 @@ SECTORES_TEMUCO: dict[str, SectorData] = {
         descripcion="Núcleo comercial y administrativo. Alta demanda de oficinas y locales. Congestión alta.",
         latitud=-38.7394, longitud=-72.5986,
         indice_velocidad_venta=82,
+        descuento_cierre_casa_pct=9.0, descuento_cierre_depto_pct=7.5,
     ),
     "pueblo_nuevo": SectorData(
         nombre="Pueblo Nuevo",
@@ -77,6 +81,7 @@ SECTORES_TEMUCO: dict[str, SectorData] = {
         descripcion="Barrio consolidado con buena conectividad. Alta demanda residencial y gran liquidez.",
         latitud=-38.7270, longitud=-72.6050,
         indice_velocidad_venta=88,
+        descuento_cierre_casa_pct=7.5, descuento_cierre_depto_pct=6.5,
     ),
     "pedro_valdivia": SectorData(
         nombre="Pedro de Valdivia",
@@ -95,6 +100,7 @@ SECTORES_TEMUCO: dict[str, SectorData] = {
         descripcion="Zona premium residencial. Propiedades de alta calidad. Excelente plusvalía y liquidez.",
         latitud=-38.7450, longitud=-72.6180,
         indice_velocidad_venta=92,
+        descuento_cierre_casa_pct=6.5, descuento_cierre_depto_pct=5.5,
     ),
     "barrio_ingles": SectorData(
         nombre="Barrio Inglés / Las Quilas",
@@ -113,6 +119,7 @@ SECTORES_TEMUCO: dict[str, SectorData] = {
         descripcion="Sector más exclusivo de Temuco. Lotes grandes, entorno arbolado. Alta demanda y escasa oferta.",
         latitud=-38.7520, longitud=-72.6310,
         indice_velocidad_venta=90,
+        descuento_cierre_casa_pct=6.0, descuento_cierre_depto_pct=5.0,
     ),
     "alemana": SectorData(
         nombre="Avenida Alemania / Alessandri",
@@ -131,6 +138,7 @@ SECTORES_TEMUCO: dict[str, SectorData] = {
         descripcion="Corredor urbano consolidado. Cercanía a U. de La Frontera. Alta densidad y servicios.",
         latitud=-38.7360, longitud=-72.6150,
         indice_velocidad_venta=84,
+        descuento_cierre_casa_pct=8.0, descuento_cierre_depto_pct=7.0,
     ),
     "los_robles": SectorData(
         nombre="Los Robles / Caupolicán Norte",
@@ -149,6 +157,7 @@ SECTORES_TEMUCO: dict[str, SectorData] = {
         descripcion="Barrio residencial consolidado. Buena calidad de vida. Precios accesibles para clase media.",
         latitud=-38.7200, longitud=-72.6020,
         indice_velocidad_venta=65,
+        descuento_cierre_casa_pct=11.0, descuento_cierre_depto_pct=9.5,
     ),
     "santa_rosa": SectorData(
         nombre="Santa Rosa / San Sebastián",
@@ -167,6 +176,7 @@ SECTORES_TEMUCO: dict[str, SectorData] = {
         descripcion="Sector residencial de densidad media. Buena conectividad. Mercado activo y precios moderados.",
         latitud=-38.7280, longitud=-72.5850,
         indice_velocidad_venta=60,
+        descuento_cierre_casa_pct=11.0, descuento_cierre_depto_pct=10.0,
     ),
     "amanecer": SectorData(
         nombre="Amanecer / Ñielol",
@@ -185,6 +195,7 @@ SECTORES_TEMUCO: dict[str, SectorData] = {
         descripcion="Sector popular consolidado. Liquidez moderada. Oportunidades en renovación.",
         latitud=-38.7180, longitud=-72.5920,
         indice_velocidad_venta=52,
+        descuento_cierre_casa_pct=12.5, descuento_cierre_depto_pct=11.5,
     ),
     "villa_aromos": SectorData(
         nombre="Villa Los Aromos / El Bosque",
@@ -203,6 +214,7 @@ SECTORES_TEMUCO: dict[str, SectorData] = {
         descripcion="Sector periférico con alta proporción de vivienda social. Baja liquidez y plusvalía moderada.",
         latitud=-38.7100, longitud=-72.5750,
         indice_velocidad_venta=38,
+        descuento_cierre_casa_pct=14.0, descuento_cierre_depto_pct=13.0,
     ),
     "padre_las_casas": SectorData(
         nombre="Padre Las Casas",
@@ -221,6 +233,7 @@ SECTORES_TEMUCO: dict[str, SectorData] = {
         descripcion="Comuna satélite. Precios bajos pero baja liquidez. Riesgo de inundación en sectores.",
         latitud=-38.7700, longitud=-72.5680,
         indice_velocidad_venta=30,
+        descuento_cierre_casa_pct=15.5, descuento_cierre_depto_pct=14.0,
     ),
     "labranza": SectorData(
         nombre="Labranza",
@@ -239,6 +252,7 @@ SECTORES_TEMUCO: dict[str, SectorData] = {
         descripcion="Zona periurbana rural. Muy baja liquidez. Potencial solo en parcelas con proyecto específico.",
         latitud=-38.8200, longitud=-72.6050,
         indice_velocidad_venta=20,
+        descuento_cierre_casa_pct=17.0, descuento_cierre_depto_pct=16.0,
     ),
     "ricardo_saldivar": SectorData(
         nombre="Ricardo Saldías / Cautín",
@@ -257,6 +271,7 @@ SECTORES_TEMUCO: dict[str, SectorData] = {
         descripcion="Sector residencial bien ubicado. Cercanía a hospitales y equipamiento. Buen potencial.",
         latitud=-38.7350, longitud=-72.5900,
         indice_velocidad_venta=62,
+        descuento_cierre_casa_pct=10.5, descuento_cierre_depto_pct=9.0,
     ),
 }
 
@@ -597,6 +612,14 @@ def calcular_rentabilidades_sector(sk: str) -> dict:
     plus_base      = sector.plusvalia_anual_pct
     plus_optimista = sector.plusvalia_optimista_pct
 
+    # Precio de cierre estimado (publicación × (1 - descuento))
+    desc_casa  = sector.descuento_cierre_casa_pct
+    desc_depto = sector.descuento_cierre_depto_pct
+    pm2_pub_casa  = meta.precio_m2_mediana
+    pm2_pub_depto = (meta.arr_depto_mediana / meta.arr_casa_mediana) * meta.precio_m2_mediana
+    pm2_cierre_casa  = round(pm2_pub_casa  * (1 - desc_casa  / 100), 1)
+    pm2_cierre_depto = round(pm2_pub_depto * (1 - desc_depto / 100), 1)
+
     return {
         # Compatibilidad backward
         "bruto":        round(bruto, 2),
@@ -619,6 +642,13 @@ def calcular_rentabilidades_sector(sk: str) -> dict:
         "plusvalia_base":      plus_base,
         "plusvalia_pesimista": plus_pesimista,
         "plusvalia_optimista": plus_optimista,
+        # Precio de cierre estimado por tipo
+        "descuento_cierre_casa_pct":   desc_casa,
+        "descuento_cierre_depto_pct":  desc_depto,
+        "precio_m2_publicacion_casa":  pm2_pub_casa,
+        "precio_m2_cierre_casa":       pm2_cierre_casa,
+        "precio_m2_cierre_depto":      pm2_cierre_depto,
+        "fuente_descuento": "Calibrado con reportes Portal Inmobiliario/TOCTOC 2024 · sector " + sector.nombre,
     }
 
 

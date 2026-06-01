@@ -8,9 +8,10 @@ import os
 import asyncio
 from pathlib import Path
 from datetime import datetime
+from typing import Optional
 
 from fastapi import FastAPI, Request, Form, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from dotenv import load_dotenv
@@ -24,6 +25,10 @@ from scrapers.cbr_client import buscar_transferencias
 from geo_map import generar_mapa_propiedad, generar_mapa_calor
 from database import guardar_analisis, listar_analisis, obtener_analisis
 from sii_nomina import lookup_rol, guardar_desde_sii_web, estadisticas_nomina
+from cierres_db import (
+    registrar_cierre, estadisticas_cierres_sector,
+    ultimos_cierres, total_cierres, estadisticas_globales,
+)
 
 load_dotenv()
 
@@ -188,6 +193,31 @@ async def analizar(
             "request": request,
             "error": str(e),
         }, status_code=500)
+
+    # Benchmark de precio cierre por sector (Opción A — estadístico calibrado)
+    if prop.sector:
+        rent = calcular_rentabilidades_sector(prop.sector)
+        if rent:
+            es_depto = "departamento" in prop.tipo_propiedad.value
+            tipo_key = "depto" if es_depto else "casa"
+            desc_pct = rent.get(f"descuento_cierre_{tipo_key}_pct")
+            pm2_pub  = rent.get("precio_m2_publicacion_casa") if not es_depto else None
+            pm2_cierre = rent.get(f"precio_m2_cierre_{tipo_key}")
+            if desc_pct and pm2_cierre:
+                result.cierre_sector_benchmark = {
+                    "sector":              prop.sector,
+                    "tipo":                tipo_key,
+                    "descuento_pct":       desc_pct,
+                    "precio_m2_publicacion": pm2_pub,
+                    "precio_m2_cierre":    pm2_cierre,
+                    "fuente":              rent.get("fuente_descuento", ""),
+                }
+
+        # Cierres reportados locales (Opción B)
+        tipo_propi = "departamento" if "departamento" in prop.tipo_propiedad.value else "casa"
+        stats_local = estadisticas_cierres_sector(prop.sector, tipo_propi)
+        if stats_local:
+            result.cierre_sector_local = stats_local
 
     # Adjuntar datos CBR al resultado
     if cbr_data:
@@ -371,6 +401,99 @@ async def api_sectores():
         }
         for k, v in SECTORES_TEMUCO.items()
     }
+
+
+@app.get("/cierres", response_class=HTMLResponse)
+async def cierres_page(
+    request: Request,
+    sector: str = "",
+    tipo: str = "",
+    ok: str = "",
+):
+    lista  = ultimos_cierres(sector=sector or None, tipo=tipo or None, limite=50)
+    stats  = estadisticas_cierres_sector(sector, tipo or "casa") if sector else None
+    global_stats = estadisticas_globales()
+    return templates.TemplateResponse("reportar_cierre.html", {
+        "request":       request,
+        "sectores":      get_sector_names(),
+        "tipos":         [(t.value, t.value.replace("_", " ").title()) for t in TipoPropiedad
+                          if t.value not in ("terreno", "bodega", "mixto")],
+        "lista":         lista,
+        "stats":         stats,
+        "global_stats":  global_stats,
+        "filtro_sector": sector,
+        "filtro_tipo":   tipo,
+        "mensaje_ok":    ok == "1",
+        "total_cierres": total_cierres(),
+        "ahora":         datetime.now().strftime("%d/%m/%Y %H:%M"),
+    })
+
+
+@app.post("/cierres", response_class=HTMLResponse)
+async def guardar_cierre_form(
+    request: Request,
+    sector: str = Form(...),
+    tipo_propiedad: str = Form(...),
+    superficie_m2: str = Form(...),
+    precio_cierre_uf: str = Form(...),
+    precio_publicado_uf: str = Form(""),
+    dormitorios: str = Form(""),
+    anio_construccion: str = Form(""),
+    estado_conservacion: str = Form(""),
+    fecha_cierre: str = Form(""),
+    direccion_ref: str = Form(""),
+    notas: str = Form(""),
+):
+    def opt_float(s: str) -> Optional[float]:
+        try:
+            v = float(s.replace(",", "."))
+            return v if v > 0 else None
+        except (ValueError, AttributeError):
+            return None
+
+    def opt_int(s: str) -> Optional[int]:
+        try:
+            v = int(s)
+            return v if v > 0 else None
+        except (ValueError, AttributeError):
+            return None
+
+    from datetime import date as date_type
+    fecha = None
+    if fecha_cierre:
+        try:
+            fecha = date_type.fromisoformat(fecha_cierre)
+        except ValueError:
+            pass
+
+    sup = opt_float(superficie_m2)
+    precio = opt_float(precio_cierre_uf)
+    if not sup or not precio:
+        raise HTTPException(400, "Superficie y precio cierre son obligatorios.")
+
+    registrar_cierre(
+        sector=sector,
+        tipo_propiedad=tipo_propiedad,
+        superficie_m2=sup,
+        precio_cierre_uf=precio,
+        precio_publicado_uf=opt_float(precio_publicado_uf),
+        dormitorios=opt_int(dormitorios),
+        anio_construccion=opt_int(anio_construccion),
+        estado_conservacion=estado_conservacion or None,
+        fecha_cierre=fecha,
+        direccion_ref=direccion_ref.strip() or None,
+        notas=notas.strip() or None,
+    )
+    return RedirectResponse(f"/cierres?ok=1", status_code=303)
+
+
+@app.get("/api/cierres/{sector}")
+async def api_cierres_sector(sector: str, tipo: str = "casa"):
+    """Estadísticas de precio de cierre reportado para un sector+tipo."""
+    stats = estadisticas_cierres_sector(sector, tipo)
+    if stats:
+        return JSONResponse(stats)
+    return JSONResponse({"error": "Datos insuficientes (mínimo 3 registros).", "n": 0})
 
 
 if __name__ == "__main__":

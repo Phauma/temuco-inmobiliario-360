@@ -233,6 +233,10 @@ class AnalysisResult(BaseModel):
     # Factores verificables (tabla de evidencia)
     factores_verificables: list[FactorVerificable] = []
 
+    # Precio de cierre del sector
+    cierre_sector_benchmark: Optional[dict] = None  # estimado estadístico (Opción A)
+    cierre_sector_local: Optional[dict] = None       # cierres reportados (Opción B)
+
     # CBR — Conservador de Bienes Raíces de Temuco
     cbr_encontrado: Optional[bool] = None
     cbr_inscripciones: list = []
