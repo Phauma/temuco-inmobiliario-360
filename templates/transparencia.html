@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transparencia de Datos — Temuco Inmobiliario 360</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    .gradient-header { background: linear-gradient(135deg, #1e3a5f 0%, #2d6a4f 100%); }
+    .conf-alta   { background:#dcfce7; color:#166534; border-color:#86efac; }
+    .conf-media  { background:#fef9c3; color:#854d0e; border-color:#fde047; }
+    .conf-baja   { background:#fee2e2; color:#991b1b; border-color:#fca5a5; }
+    .badge-clsf  { font-size:10px; font-weight:700; padding:2px 8px; border-radius:999px; }
+    .card { background:#fff; border-radius:16px; border:1px solid #e2e8f0;
+            box-shadow:0 1px 4px rgba(0,0,0,.06); overflow:hidden; }
+    .card-header { padding:14px 18px 12px; border-bottom:1px solid #f1f5f9; }
+    .card-body   { padding:14px 18px 16px; }
+    .tbl-ranges { width:100%; font-size:12px; border-collapse:collapse; }
+    .tbl-ranges th { background:#f8fafc; font-size:10px; text-transform:uppercase;
+                     letter-spacing:.05em; color:#64748b; font-weight:600;
+                     padding:5px 8px; border:1px solid #e2e8f0; }
+    .tbl-ranges td { padding:5px 8px; border:1px solid #e2e8f0; color:#334155; }
+    .tbl-ranges td.num { text-align:right; font-weight:600; font-variant-numeric:tabular-nums; }
+    .tbl-ranges tr.highlight td { background:#f0fdf4; }
+    .metric-box { border-radius:10px; padding:10px 12px; text-align:center; }
+    .rent-row { display:flex; justify-content:space-between; align-items:center;
+                padding:5px 0; border-bottom:1px solid #f1f5f9; font-size:13px; }
+    .rent-row:last-child { border-bottom:none; }
+    .obs-pill { display:inline-flex; align-items:center; gap:4px;
+                border-radius:999px; padding:2px 9px; font-size:12px; font-weight:600; }
+    .filter-btn { padding:6px 14px; border-radius:8px; font-size:12px; font-weight:600;
+                  border:1.5px solid #e2e8f0; background:#fff; cursor:pointer;
+                  transition:all .15s; }
+    .filter-btn.active { background:#1e3a5f; color:#fff; border-color:#1e3a5f; }
+    .filter-btn:hover:not(.active) { border-color:#93c5fd; background:#eff6ff; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+
+<!-- Header -->
+<header class="gradient-header text-white shadow-lg">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <i class="fas fa-building text-xl text-emerald-300"></i>
+      <span class="font-bold">Temuco Inmobiliario 360</span>
+    </div>
+    <nav class="flex gap-4 text-sm">
+      <a href="/" class="text-blue-200 hover:text-white"><i class="fas fa-home mr-1"></i>Inicio</a>
+      <a href="/historial" class="text-blue-200 hover:text-white"><i class="fas fa-history mr-1"></i>Historial</a>
+      <a href="/mapa/velocidad_venta" class="text-blue-200 hover:text-white"><i class="fas fa-map mr-1"></i>Mapas</a>
+      <a href="/transparencia" class="text-white font-semibold"><i class="fas fa-database mr-1"></i>Transparencia</a>
+    </nav>
+  </div>
+</header>
+
+<div class="max-w-7xl mx-auto px-4 py-5 flex-1">
+
+  <!-- Título y descripción -->
+  <div class="mb-4">
+    <h1 class="text-xl font-bold text-gray-800 mb-1">
+      <i class="fas fa-database mr-2 text-blue-600"></i>Transparencia de Datos por Sector
+    </h1>
+    <p class="text-sm text-gray-500">
+      Fuentes, cobertura, rangos de precios y rentabilidades de referencia para los 12 sectores de Temuco urbano.
+      Generado: {{ ahora }}
+    </p>
+  </div>
+
+  <!-- Banner de advertencia -->
+  <div class="bg-amber-50 border border-amber-200 rounded-xl px-5 py-3 mb-5 text-sm text-amber-800">
+    <i class="fas fa-exclamation-triangle mr-2 text-amber-500"></i>
+    <strong>Datos de mercado de oferta, no de cierre.</strong>
+    Los precios y arriendos provienen de publicaciones activas en portales inmobiliarios (Portal Inmobiliario, Yapo.cl).
+    No representan precios de transacciones reales del Conservador de Bienes Raíces (CBR).
+    Los precios de cierre pueden diferir en un 8–15% respecto al precio publicado.
+    Las observaciones son <em>estimados</em> del volumen activo en cada sector durante el período indicado.
+  </div>
+
+  <!-- Resumen estadístico -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 text-center">
+      <div class="text-2xl font-bold text-blue-700">{{ datos | length }}</div>
+      <div class="text-xs text-gray-500 font-medium mt-1">Sectores analizados</div>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 text-center">
+      <div class="text-2xl font-bold text-emerald-600">{{ total_obs_venta }}</div>
+      <div class="text-xs text-gray-500 font-medium mt-1">Obs. de venta totales</div>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 text-center">
+      <div class="text-2xl font-bold text-purple-600">{{ total_obs_arriendo }}</div>
+      <div class="text-xs text-gray-500 font-medium mt-1">Obs. de arriendo totales</div>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 text-center">
+      <div class="text-2xl font-bold text-red-600">{{ sectores_baja_conf }}</div>
+      <div class="text-xs text-gray-500 font-medium mt-1">Sectores baja confiabilidad</div>
+    </div>
+  </div>
+
+  <!-- Leyenda de indicadores -->
+  <div class="flex flex-wrap gap-3 mb-5 items-center">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Filtrar:</span>
+    <button onclick="filtrar('todos')" class="filter-btn active" id="btn-todos">
+      <i class="fas fa-th mr-1"></i>Todos
+    </button>
+    <button onclick="filtrar('alta')" class="filter-btn" id="btn-alta">
+      <i class="fas fa-check-circle mr-1 text-green-600"></i>Alta confiabilidad
+    </button>
+    <button onclick="filtrar('media')" class="filter-btn" id="btn-media">
+      <i class="fas fa-exclamation-circle mr-1 text-yellow-500"></i>Confiabilidad media
+    </button>
+    <button onclick="filtrar('baja')" class="filter-btn" id="btn-baja">
+      <i class="fas fa-times-circle mr-1 text-red-500"></i>Baja confiabilidad
+    </button>
+    <span class="ml-auto text-xs text-gray-400 italic">
+      <i class="fas fa-info-circle mr-1"></i>&lt; 20 observaciones = baja confiabilidad
+    </span>
+  </div>
+
+  <!-- Grilla de sectores -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4" id="grilla">
+
+  {% for sk, item in datos.items() %}
+  {% set s = item.sector %}
+  {% set m = item.meta %}
+  {% set r = item.rent %}
+  {% set nc = m.nivel_confianza %}
+
+  <div class="card sector-card" data-conf="{{ nc }}">
+
+    <!-- Card header -->
+    <div class="card-header">
+      <div class="flex items-start justify-between gap-2">
+        <div>
+          <h2 class="font-bold text-gray-800 text-base leading-tight">{{ s.nombre }}</h2>
+          <div class="flex items-center gap-2 mt-1">
+            {% set clsf_colors = {
+              'alto':       'bg-violet-100 text-violet-800',
+              'medio_alto': 'bg-blue-100 text-blue-800',
+              'medio':      'bg-cyan-100 text-cyan-800',
+              'medio_bajo': 'bg-orange-100 text-orange-800',
+              'bajo':       'bg-red-100 text-red-800',
+            } %}
+            <span class="badge-clsf {{ clsf_colors.get(s.clasificacion, 'bg-gray-100 text-gray-700') }}">
+              {{ s.clasificacion.replace('_', ' ').upper() }}
+            </span>
+          </div>
+        </div>
+        <div class="shrink-0">
+          {% if nc == 'alta' %}
+          <span class="conf-alta border rounded-lg px-2 py-1 text-xs font-bold flex items-center gap-1">
+            <i class="fas fa-check-circle"></i> Confianza alta
+          </span>
+          {% elif nc == 'media' %}
+          <span class="conf-media border rounded-lg px-2 py-1 text-xs font-bold flex items-center gap-1">
+            <i class="fas fa-exclamation-circle"></i> Confianza media
+          </span>
+          {% else %}
+          <span class="conf-baja border rounded-lg px-2 py-1 text-xs font-bold flex items-center gap-1">
+            <i class="fas fa-times-circle"></i> Baja confiabilidad
+          </span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="card-body space-y-4">
+
+      <!-- Fuentes y observaciones -->
+      <div class="grid grid-cols-2 gap-3">
+        <!-- Observaciones -->
+        <div class="bg-gray-50 rounded-lg p-3">
+          <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+            <i class="fas fa-hashtag mr-1"></i>Observaciones
+          </div>
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-gray-600">Venta</span>
+              <span class="obs-pill
+                {% if m.baja_conf_venta %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+                {% if m.baja_conf_venta %}<i class="fas fa-exclamation-triangle text-xs"></i>{% else %}<i class="fas fa-check text-xs"></i>{% endif %}
+                {{ m.n_obs_venta }}
+              </span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-gray-600">Arriendo</span>
+              <span class="obs-pill
+                {% if m.baja_conf_arriendo %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+                {% if m.baja_conf_arriendo %}<i class="fas fa-exclamation-triangle text-xs"></i>{% else %}<i class="fas fa-check text-xs"></i>{% endif %}
+                {{ m.n_obs_arriendo }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fuentes y fecha -->
+        <div class="bg-gray-50 rounded-lg p-3">
+          <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+            <i class="fas fa-link mr-1"></i>Fuentes
+          </div>
+          <div class="space-y-1">
+            <div class="text-xs text-gray-600">
+              <span class="font-medium">Venta:</span><br>
+              <span class="text-gray-500">{{ m.fuente_precios }}</span>
+            </div>
+            <div class="text-xs text-gray-600 mt-1">
+              <span class="font-medium">Arriendo:</span><br>
+              <span class="text-gray-500">{{ m.fuente_arriendos }}</span>
+            </div>
+            <div class="text-xs text-gray-400 mt-1">
+              <i class="fas fa-calendar-alt mr-1"></i>{{ m.fecha_captura }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rangos de precios y arriendos -->
+      <div>
+        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+          <i class="fas fa-ruler-horizontal mr-1"></i>Rangos observados
+        </div>
+        <table class="tbl-ranges">
+          <thead>
+            <tr>
+              <th style="text-align:left">Indicador</th>
+              <th>Mínimo</th>
+              <th>Mediana</th>
+              <th>Máximo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="highlight">
+              <td><i class="fas fa-home text-blue-400 mr-1"></i>Precio venta (UF/m²)</td>
+              <td class="num">{{ m.precio_m2_min }}</td>
+              <td class="num font-bold">{{ m.precio_m2_mediana }}</td>
+              <td class="num">{{ m.precio_m2_max }}</td>
+            </tr>
+            <tr>
+              <td><i class="fas fa-key text-emerald-400 mr-1"></i>Arriendo casa (UF/mes)</td>
+              <td class="num">{{ m.arr_casa_min }}</td>
+              <td class="num font-bold">{{ m.arr_casa_mediana }}</td>
+              <td class="num">{{ m.arr_casa_max }}</td>
+            </tr>
+            <tr>
+              <td><i class="fas fa-building text-purple-400 mr-1"></i>Arriendo depto (UF/mes)</td>
+              <td class="num">{{ m.arr_depto_min }}</td>
+              <td class="num font-bold">{{ m.arr_depto_mediana }}</td>
+              <td class="num">{{ m.arr_depto_max }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="text-xs text-gray-400 mt-1">
+          Ref.: casa 100 m² · depto 55 m² · mediana = punto medio del rango observado
+        </p>
+      </div>
+
+      <!-- Rentabilidades -->
+      <div>
+        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+          <i class="fas fa-percent mr-1"></i>Rentabilidad (ref. 100 m² · precio mediana)
+        </div>
+        <div class="bg-slate-50 rounded-lg px-3 py-2 space-y-0">
+          <div class="rent-row">
+            <div>
+              <span class="text-xs font-semibold text-gray-700">Bruta</span>
+              <span class="text-xs text-gray-400 ml-1">— sin deducir gastos</span>
+            </div>
+            <span class="font-bold text-blue-700 text-sm">{{ r.bruto }}%</span>
+          </div>
+          <div class="rent-row">
+            <div>
+              <span class="text-xs font-semibold text-gray-700">Neta simplificada</span>
+              <span class="text-xs text-gray-400 ml-1">— gasto plano 15%</span>
+            </div>
+            <span class="font-bold text-emerald-700 text-sm">{{ r.neta_simple }}%</span>
+          </div>
+          <div class="rent-row">
+            <div>
+              <span class="text-xs font-semibold text-gray-700">Cap Rate institucional</span>
+              <div class="text-xs text-gray-400">NOI: vacancia {{ r.vacancia_pct }}% + contrib 0.6% + gastos_op 10%</div>
+            </div>
+            <span class="font-bold text-violet-700 text-sm">{{ r.cap_inst }}%</span>
+          </div>
+        </div>
+        {% if m.baja_conf_any %}
+        <div class="mt-2 flex items-start gap-1.5 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+          <i class="fas fa-exclamation-triangle text-red-400 mt-0.5 text-xs shrink-0"></i>
+          <p class="text-xs text-red-700">
+            <strong>Indicadores de baja confiabilidad.</strong>
+            {% if m.baja_conf_venta and m.baja_conf_arriendo %}
+              Menos de 20 observaciones tanto en venta como en arriendo.
+            {% elif m.baja_conf_venta %}
+              Menos de 20 observaciones en venta ({{ m.n_obs_venta }}).
+            {% else %}
+              Menos de 20 observaciones en arriendo ({{ m.n_obs_arriendo }}).
+            {% endif %}
+            Los rangos son referenciales con alta incertidumbre. No utilizar como base única de tasación.
+          </p>
+        </div>
+        {% endif %}
+      </div>
+
+    </div><!-- /card-body -->
+  </div><!-- /card -->
+  {% endfor %}
+
+  </div><!-- /grilla -->
+
+  <!-- Metodología al pie -->
+  <div class="mt-8 bg-white border border-gray-200 rounded-xl px-6 py-5">
+    <h3 class="text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">
+      <i class="fas fa-calculator mr-2 text-blue-500"></i>Metodología de rentabilidades
+    </h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-gray-600">
+      <div>
+        <div class="font-semibold text-gray-800 mb-1">Rentabilidad Bruta</div>
+        <code class="block bg-gray-50 rounded px-2 py-1.5 font-mono text-xs">
+          (arriendo_mensual × 12) / precio_venta × 100
+        </code>
+        <p class="mt-1 text-gray-500">Sin descontar ningún gasto. Indicador de entrada rápida.</p>
+      </div>
+      <div>
+        <div class="font-semibold text-gray-800 mb-1">Neta Simplificada</div>
+        <code class="block bg-gray-50 rounded px-2 py-1.5 font-mono text-xs">
+          (arriendo_anual × 0.85) / precio_venta × 100
+        </code>
+        <p class="mt-1 text-gray-500">Descuento plano del 15% sobre ingreso bruto (vacancia + gastos mixtos). Comparación rápida entre sectores.</p>
+      </div>
+      <div>
+        <div class="font-semibold text-gray-800 mb-1">Cap Rate Institucional</div>
+        <code class="block bg-gray-50 rounded px-2 py-1.5 font-mono text-xs">
+          NOI / precio_venta × 100<br>
+          NOI = arr × (1−vac%) − contrib − gastos_op
+        </code>
+        <p class="mt-1 text-gray-500">Vacancia según demanda del sector (5-15%). Contribuciones 0.6% del valor. Gastos operacionales 10% del arriendo.</p>
+      </div>
+    </div>
+    <div class="mt-4 pt-4 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-gray-500">
+      <div>
+        <i class="fas fa-info-circle text-blue-400 mr-1"></i>
+        <strong>Precio de referencia:</strong> mediana del rango observado × 100 m² (superficie estándar de comparación).
+      </div>
+      <div>
+        <i class="fas fa-info-circle text-blue-400 mr-1"></i>
+        <strong>Sin CBR:</strong> Esta plataforma no tiene acceso a registros del Conservador de Bienes Raíces.
+        Para compraventas verificadas, consultar CBR de Temuco (Claro Solar 796) o conservador.cl.
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+function filtrar(nivel) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn-' + nivel).classList.add('active');
+  document.querySelectorAll('.sector-card').forEach(card => {
+    const conf = card.dataset.conf;
+    card.style.display = (nivel === 'todos' || conf === nivel) ? '' : 'none';
+  });
+}
+</script>
+
+</body>
+</html>

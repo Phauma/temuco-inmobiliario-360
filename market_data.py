@@ -342,6 +342,188 @@ HEATMAP_SCORES = {
 }
 
 
+# ── Metadatos de fuente y confiabilidad por sector ────────────────────────────
+
+@dataclass
+class SectorMetadata:
+    """Transparencia: fuente, cobertura y calidad de datos por sector."""
+    n_obs_venta: int          # publicaciones activas de venta analizadas (estimado)
+    n_obs_arriendo: int       # publicaciones activas de arriendo analizadas (estimado)
+    fuente_precios: str
+    fuente_arriendos: str
+    fecha_captura: str
+    precio_m2_min: float      # precio venta casa (UF/m²) — mínimo observado
+    precio_m2_mediana: float  # punto medio del rango; no mediana estadística
+    precio_m2_max: float
+    arr_casa_min: float       # arriendo casa (UF/mes) — mínimo referencial
+    arr_casa_mediana: float
+    arr_casa_max: float
+    arr_depto_min: float      # arriendo depto (UF/mes)
+    arr_depto_mediana: float
+    arr_depto_max: float
+
+    @property
+    def baja_conf_venta(self) -> bool:
+        return self.n_obs_venta < 20
+
+    @property
+    def baja_conf_arriendo(self) -> bool:
+        return self.n_obs_arriendo < 20
+
+    @property
+    def baja_conf_any(self) -> bool:
+        return self.baja_conf_venta or self.baja_conf_arriendo
+
+    @property
+    def nivel_confianza(self) -> str:
+        if not self.baja_conf_venta and not self.baja_conf_arriendo:
+            return "alta"
+        if self.baja_conf_venta and self.baja_conf_arriendo:
+            return "baja"
+        return "media"
+
+
+METADATA_SECTORES: dict[str, SectorMetadata] = {
+    "centro": SectorMetadata(
+        n_obs_venta=45, n_obs_arriendo=35,
+        fuente_precios="Portal Inmobiliario / Yapo.cl",
+        fuente_arriendos="Yapo.cl / Portal Inmobiliario",
+        fecha_captura="2024 Q3–Q4",
+        precio_m2_min=48.0, precio_m2_mediana=61.5, precio_m2_max=75.0,
+        arr_casa_min=13.0, arr_casa_mediana=16.0, arr_casa_max=20.0,
+        arr_depto_min=9.0, arr_depto_mediana=11.0, arr_depto_max=13.5,
+    ),
+    "pueblo_nuevo": SectorMetadata(
+        n_obs_venta=38, n_obs_arriendo=28,
+        fuente_precios="Portal Inmobiliario / Yapo.cl",
+        fuente_arriendos="Yapo.cl / Portal Inmobiliario",
+        fecha_captura="2024 Q3–Q4",
+        precio_m2_min=42.0, precio_m2_mediana=53.5, precio_m2_max=65.0,
+        arr_casa_min=12.0, arr_casa_mediana=15.0, arr_casa_max=19.0,
+        arr_depto_min=8.0, arr_depto_mediana=10.0, arr_depto_max=12.5,
+    ),
+    "pedro_valdivia": SectorMetadata(
+        n_obs_venta=22, n_obs_arriendo=16,
+        fuente_precios="Portal Inmobiliario / Yapo.cl",
+        fuente_arriendos="Yapo.cl",
+        fecha_captura="2024 Q3–Q4",
+        precio_m2_min=50.0, precio_m2_mediana=65.0, precio_m2_max=80.0,
+        arr_casa_min=18.0, arr_casa_mediana=22.0, arr_casa_max=27.0,
+        arr_depto_min=11.0, arr_depto_mediana=13.0, arr_depto_max=16.0,
+    ),
+    "barrio_ingles": SectorMetadata(
+        n_obs_venta=12, n_obs_arriendo=8,
+        fuente_precios="Portal Inmobiliario",
+        fuente_arriendos="Yapo.cl",
+        fecha_captura="2024 Q3–Q4",
+        precio_m2_min=50.0, precio_m2_mediana=66.0, precio_m2_max=82.0,
+        arr_casa_min=20.0, arr_casa_mediana=25.0, arr_casa_max=31.0,
+        arr_depto_min=11.0, arr_depto_mediana=14.0, arr_depto_max=17.5,
+    ),
+    "alemana": SectorMetadata(
+        n_obs_venta=42, n_obs_arriendo=32,
+        fuente_precios="Portal Inmobiliario / Yapo.cl",
+        fuente_arriendos="Yapo.cl / Portal Inmobiliario",
+        fecha_captura="2024 Q3–Q4",
+        precio_m2_min=42.0, precio_m2_mediana=55.0, precio_m2_max=68.0,
+        arr_casa_min=11.0, arr_casa_mediana=14.0, arr_casa_max=18.0,
+        arr_depto_min=8.5, arr_depto_mediana=10.5, arr_depto_max=13.0,
+    ),
+    "los_robles": SectorMetadata(
+        n_obs_venta=28, n_obs_arriendo=20,
+        fuente_precios="Portal Inmobiliario / Yapo.cl",
+        fuente_arriendos="Yapo.cl / Portal Inmobiliario",
+        fecha_captura="2024 Q3–Q4",
+        precio_m2_min=32.0, precio_m2_mediana=42.0, precio_m2_max=52.0,
+        arr_casa_min=9.5, arr_casa_mediana=12.0, arr_casa_max=15.0,
+        arr_depto_min=7.0, arr_depto_mediana=8.5, arr_depto_max=10.5,
+    ),
+    "santa_rosa": SectorMetadata(
+        n_obs_venta=25, n_obs_arriendo=17,
+        fuente_precios="Portal Inmobiliario / Yapo.cl",
+        fuente_arriendos="Yapo.cl",
+        fecha_captura="2024 Q3–Q4",
+        precio_m2_min=30.0, precio_m2_mediana=40.0, precio_m2_max=50.0,
+        arr_casa_min=9.0, arr_casa_mediana=11.0, arr_casa_max=14.0,
+        arr_depto_min=6.5, arr_depto_mediana=8.0, arr_depto_max=10.0,
+    ),
+    "amanecer": SectorMetadata(
+        n_obs_venta=18, n_obs_arriendo=12,
+        fuente_precios="Portal Inmobiliario / Yapo.cl",
+        fuente_arriendos="Yapo.cl",
+        fecha_captura="2024 Q3–Q4",
+        precio_m2_min=28.0, precio_m2_mediana=37.0, precio_m2_max=46.0,
+        arr_casa_min=8.0, arr_casa_mediana=10.0, arr_casa_max=13.0,
+        arr_depto_min=6.0, arr_depto_mediana=7.5, arr_depto_max=9.5,
+    ),
+    "villa_aromos": SectorMetadata(
+        n_obs_venta=15, n_obs_arriendo=10,
+        fuente_precios="Portal Inmobiliario / Yapo.cl",
+        fuente_arriendos="Yapo.cl",
+        fecha_captura="2024 Q3–Q4",
+        precio_m2_min=22.0, precio_m2_mediana=30.0, precio_m2_max=38.0,
+        arr_casa_min=7.0, arr_casa_mediana=8.5, arr_casa_max=11.0,
+        arr_depto_min=5.5, arr_depto_mediana=6.5, arr_depto_max=8.0,
+    ),
+    "padre_las_casas": SectorMetadata(
+        n_obs_venta=16, n_obs_arriendo=9,
+        fuente_precios="Portal Inmobiliario / Yapo.cl",
+        fuente_arriendos="Yapo.cl",
+        fecha_captura="2024 Q3–Q4",
+        precio_m2_min=18.0, precio_m2_mediana=26.5, precio_m2_max=35.0,
+        arr_casa_min=6.0, arr_casa_mediana=7.5, arr_casa_max=10.0,
+        arr_depto_min=4.5, arr_depto_mediana=5.5, arr_depto_max=7.0,
+    ),
+    "labranza": SectorMetadata(
+        n_obs_venta=8, n_obs_arriendo=5,
+        fuente_precios="Yapo.cl",
+        fuente_arriendos="Yapo.cl",
+        fecha_captura="2024 Q3–Q4",
+        precio_m2_min=14.0, precio_m2_mediana=21.0, precio_m2_max=28.0,
+        arr_casa_min=5.0, arr_casa_mediana=6.0, arr_casa_max=8.0,
+        arr_depto_min=3.5, arr_depto_mediana=4.5, arr_depto_max=5.5,
+    ),
+    "ricardo_saldivar": SectorMetadata(
+        n_obs_venta=20, n_obs_arriendo=14,
+        fuente_precios="Portal Inmobiliario / Yapo.cl",
+        fuente_arriendos="Yapo.cl",
+        fecha_captura="2024 Q3–Q4",
+        precio_m2_min=30.0, precio_m2_mediana=39.0, precio_m2_max=48.0,
+        arr_casa_min=9.5, arr_casa_mediana=11.5, arr_casa_max=14.5,
+        arr_depto_min=6.5, arr_depto_mediana=8.0, arr_depto_max=10.0,
+    ),
+}
+
+
+def calcular_rentabilidades_sector(sk: str) -> dict:
+    """Rentabilidad bruta, neta simplificada y cap rate institucional para un sector."""
+    sector = SECTORES_TEMUCO.get(sk)
+    meta   = METADATA_SECTORES.get(sk)
+    if not sector or not meta:
+        return {}
+
+    precio    = meta.precio_m2_mediana * 100   # referencia 100 m²
+    arr_anual = meta.arr_casa_mediana * 12
+
+    bruto = arr_anual / precio * 100
+
+    # Neta simplificada: descuento plano 15% sobre ingreso bruto
+    neta_simple = arr_anual * 0.85 / precio * 100
+
+    # Cap Rate institucional: NOI estandarizado
+    vacancia  = {"alta": 0.05, "media": 0.09, "baja": 0.15}.get(sector.demanda_arriendo, 0.09)
+    contrib   = precio * 0.006     # contribuciones ~0.6% del valor comercial/año
+    gastos_op = arr_anual * 0.10   # administración + mantención: 10% arriendo/año
+    noi       = arr_anual * (1 - vacancia) - contrib - gastos_op
+
+    return {
+        "bruto":       round(bruto, 2),
+        "neta_simple": round(neta_simple, 2),
+        "cap_inst":    round(max(noi / precio * 100, 1.0), 2),
+        "vacancia_pct": int(vacancia * 100),
+    }
+
+
 def get_sector(nombre: str) -> Optional[SectorData]:
     key = nombre.lower().replace(" ", "_").replace("-", "_")
     return SECTORES_TEMUCO.get(key)

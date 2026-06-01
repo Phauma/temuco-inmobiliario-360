@@ -16,7 +16,7 @@ from fastapi.templating import Jinja2Templates
 from dotenv import load_dotenv
 
 from models import PropertyInput, TipoPropiedad, EstadoConservacion, ObjetivoAnalisis
-from market_data import get_sector_names, SECTORES_TEMUCO
+from market_data import get_sector_names, SECTORES_TEMUCO, METADATA_SECTORES, calcular_rentabilidades_sector
 from analyzer import analizar_propiedad
 from scrapers.portal_scraper import buscar_comparables
 from scrapers.sii_client import consultar_avaluo
@@ -233,6 +233,30 @@ async def mapa_calor(request: Request, capa: str = "velocidad_venta"):
         "mapa_html": mapa_html,
         "capa_actual": capa,
         "capas": capas_validas,
+    })
+
+
+@app.get("/transparencia", response_class=HTMLResponse)
+async def transparencia_datos(request: Request):
+    datos = {}
+    for sk, sd in SECTORES_TEMUCO.items():
+        meta = METADATA_SECTORES.get(sk)
+        if meta:
+            datos[sk] = {
+                "sector": sd,
+                "meta": meta,
+                "rent": calcular_rentabilidades_sector(sk),
+            }
+    total_obs_v = sum(v["meta"].n_obs_venta for v in datos.values())
+    total_obs_a = sum(v["meta"].n_obs_arriendo for v in datos.values())
+    sectores_baja_conf = sum(1 for v in datos.values() if v["meta"].baja_conf_any)
+    return templates.TemplateResponse("transparencia.html", {
+        "request": request,
+        "datos": datos,
+        "total_obs_venta": total_obs_v,
+        "total_obs_arriendo": total_obs_a,
+        "sectores_baja_conf": sectores_baja_conf,
+        "ahora": datetime.now().strftime("%d/%m/%Y %H:%M"),
     })
 
 
