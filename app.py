@@ -22,7 +22,7 @@ from scrapers.portal_scraper import buscar_comparables
 from scrapers.sii_client import consultar_avaluo
 from geo_map import generar_mapa_propiedad, generar_mapa_calor
 from database import guardar_analisis, listar_analisis, obtener_analisis
-from sii_nomina import lookup_rol, estadisticas_nomina
+from sii_nomina import lookup_rol, guardar_desde_sii_web, estadisticas_nomina
 
 load_dotenv()
 
@@ -163,6 +163,8 @@ async def analizar(
                 comparables = result
             elif name == "sii" and result:
                 sii_data = result
+                if prop.rol_sii:
+                    guardar_desde_sii_web(prop.rol_sii, result)  # caché permanente
 
     # Análisis principal
     try:
@@ -284,11 +286,12 @@ async def api_sii_rol(rol: str):
     if resultado:
         return JSONResponse(resultado)
 
-    # 2. Fallback: scraping SII web
+    # 2. Fallback: scraping SII web (y guardar resultado en DB local)
     try:
         from scrapers.sii_client import consultar_avaluo
         sii_data = await consultar_avaluo(rol)
         if sii_data:
+            guardar_desde_sii_web(rol, sii_data)   # caché permanente
             return JSONResponse({
                 "found": True,
                 "rol": rol,

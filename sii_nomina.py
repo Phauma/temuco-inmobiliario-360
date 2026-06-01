@@ -122,6 +122,67 @@ def lookup_rol(rol: str) -> dict | None:
         return _prop_to_dict(prop, fuente="nomina_local")
 
 
+def guardar_desde_sii_web(rol: str, sii_data: dict, uf_valor: float = 38_000.0) -> None:
+    """
+    Guarda en la DB local un resultado obtenido del scraper SII web.
+    Se llama automáticamente cada vez que el scraper retorna datos válidos.
+    """
+    rol_norm = normalizar_rol(rol)
+    if not rol_norm or not sii_data:
+        return
+
+    engine = get_engine()
+    manzana, predio = rol_norm.split("-")
+
+    av_uf  = sii_data.get("avaluo_fiscal_uf")
+    av_clp = round(av_uf * uf_valor, 0) if av_uf else None
+    contrib_uf  = sii_data.get("contribuciones_anuales_uf")
+    contrib_clp = round(contrib_uf * uf_valor, 0) if contrib_uf else None
+
+    with Session(engine) as session:
+        existing = session.query(PropiedadSII).filter(
+            PropiedadSII.rol == rol_norm
+        ).first()
+
+        if existing:
+            # Actualizar solo campos que el scraper SII haya devuelto
+            if av_uf is not None:
+                existing.av_total_uf  = av_uf
+                existing.av_total_clp = av_clp
+            if contrib_uf is not None:
+                existing.contrib_anual_uf  = contrib_uf
+                existing.contrib_anual_clp = contrib_clp
+            if sii_data.get("destino"):
+                existing.destino = sii_data["destino"]
+            if sii_data.get("superficie_construida_m2"):
+                existing.sup_construida = sii_data["superficie_construida_m2"]
+            if sii_data.get("superficie_terreno_m2"):
+                existing.sup_terreno = sii_data["superficie_terreno_m2"]
+            existing.fecha_carga    = datetime.now()
+            existing.uf_carga       = uf_valor
+            existing.fuente_archivo = "sii_web"
+        else:
+            session.add(PropiedadSII(
+                rol=rol_norm,
+                manzana=manzana,
+                predio=predio,
+                direccion=sii_data.get("propietario"),  # lo mejor disponible
+                destino=sii_data.get("destino"),
+                sup_construida=sii_data.get("superficie_construida_m2"),
+                sup_terreno=sii_data.get("superficie_terreno_m2"),
+                av_total_clp=av_clp,
+                av_total_uf=av_uf,
+                contrib_anual_clp=contrib_clp,
+                contrib_anual_uf=contrib_uf,
+                estado="Vigente",
+                uf_carga=uf_valor,
+                fecha_carga=datetime.now(),
+                fuente_archivo="sii_web",
+            ))
+
+        session.commit()
+
+
 def lookup_direccion(texto: str, limit: int = 5) -> list[dict]:
     """
     Búsqueda parcial por dirección (para autocompletado).
