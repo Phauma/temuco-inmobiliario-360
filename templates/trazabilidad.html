@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fuentes y Trazabilidad — Temuco Inmobiliario 360</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    .gradient-header { background: linear-gradient(135deg, #1e3a5f 0%, #2d6a4f 100%); }
+
+    /* Confianza badges */
+    .conf-alta    { background:#dcfce7; color:#166534; }
+    .conf-media   { background:#fef9c3; color:#854d0e; }
+    .conf-baja    { background:#ffedd5; color:#9a3412; }
+    .conf-muy_baja{ background:#fee2e2; color:#991b1b; }
+
+    /* Estado fuente */
+    .estado-utilizado   { background:#dcfce7; color:#166534; }
+    .estado-parcial     { background:#fef9c3; color:#854d0e; }
+    .estado-no_utilizado{ background:#f1f5f9; color:#64748b; }
+
+    .conf-badge {
+      display:inline-flex; align-items:center; gap:4px;
+      font-size:11px; font-weight:700; padding:2px 8px;
+      border-radius:999px; white-space:nowrap;
+    }
+    .tbl { width:100%; border-collapse:collapse; font-size:12px; }
+    .tbl th { background:#f8fafc; color:#64748b; font-size:10px; text-transform:uppercase;
+              letter-spacing:.04em; font-weight:700; padding:8px 10px;
+              border:1px solid #e2e8f0; text-align:left; }
+    .tbl td { padding:7px 10px; border:1px solid #e2e8f0; color:#334155; vertical-align:top; }
+    .tbl tr:hover td { background:#f8fafc; }
+    .tbl td.num { text-align:right; font-variant-numeric:tabular-nums; font-weight:600; }
+    .tbl tr.warn-row td { background:#fffbeb; }
+
+    .section-card { background:#fff; border-radius:14px; border:1px solid #e2e8f0;
+                    box-shadow:0 1px 4px rgba(0,0,0,.06); margin-bottom:24px; overflow:hidden; }
+    .section-header { padding:14px 20px; border-bottom:1px solid #f1f5f9;
+                      display:flex; align-items:center; gap:10px; }
+    .section-body { padding:16px 20px; }
+
+    /* Sticky page-nav */
+    .page-nav { position:sticky; top:0; z-index:50; background:#fff;
+                border-bottom:1px solid #e2e8f0; padding:0 20px; }
+    .page-nav a { display:inline-block; padding:10px 14px; font-size:12px; font-weight:600;
+                  color:#64748b; text-decoration:none; border-bottom:3px solid transparent;
+                  transition:all .15s; }
+    .page-nav a:hover, .page-nav a.active { color:#1e3a5f; border-bottom-color:#1e3a5f; }
+
+    /* Sector filter pills */
+    .sector-pill { padding:5px 12px; border-radius:8px; font-size:11px; font-weight:700;
+                   border:1.5px solid #e2e8f0; background:#f8fafc; cursor:pointer;
+                   transition:all .15s; white-space:nowrap; }
+    .sector-pill.active { background:#1e3a5f; color:#fff; border-color:#1e3a5f; }
+    .sector-pill:hover:not(.active) { border-color:#93c5fd; background:#eff6ff; }
+
+    /* Advertencia row */
+    .adv-cell { font-size:11px; color:#92400e; background:#fffbeb !important;
+                border-left:3px solid #f59e0b; }
+
+    /* Oferta activa table highlight */
+    .cob-high  { color:#166534; font-weight:700; }
+    .cob-med   { color:#854d0e; font-weight:700; }
+    .cob-low   { color:#9a3412; font-weight:700; }
+    .cob-vlow  { color:#991b1b; font-weight:700; }
+
+    .scroll-x { overflow-x:auto; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+
+<!-- Header -->
+<header class="gradient-header text-white shadow-lg">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <i class="fas fa-building text-xl text-emerald-300"></i>
+      <span class="font-bold">Temuco Inmobiliario 360</span>
+    </div>
+    <nav class="flex gap-4 text-sm">
+      <a href="/" class="text-blue-200 hover:text-white"><i class="fas fa-home mr-1"></i>Inicio</a>
+      <a href="/historial" class="text-blue-200 hover:text-white"><i class="fas fa-history mr-1"></i>Historial</a>
+      <a href="/transparencia" class="text-blue-200 hover:text-white"><i class="fas fa-database mr-1"></i>Transparencia</a>
+      <a href="/trazabilidad" class="text-white font-semibold"><i class="fas fa-sitemap mr-1"></i>Trazabilidad</a>
+    </nav>
+  </div>
+</header>
+
+<!-- Page navigation -->
+<div class="page-nav shadow-sm">
+  <div class="max-w-7xl mx-auto flex items-center gap-1 overflow-x-auto">
+    <a href="#fuentes" class="active" onclick="setNav(this)">
+      <i class="fas fa-list-ul mr-1"></i>Catálogo de fuentes
+    </a>
+    <a href="#indicadores" onclick="setNav(this)">
+      <i class="fas fa-table mr-1"></i>Indicadores por sector
+    </a>
+    <a href="#oferta" onclick="setNav(this)">
+      <i class="fas fa-layer-group mr-1"></i>Oferta activa
+    </a>
+    <span class="ml-auto text-xs text-gray-400 pr-2 shrink-0">
+      Generado: {{ ahora }}
+    </span>
+  </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 py-5 flex-1">
+
+  <!-- Título -->
+  <div class="mb-4">
+    <h1 class="text-xl font-bold text-gray-800 mb-1">
+      <i class="fas fa-sitemap mr-2 text-blue-600"></i>Fuentes y Trazabilidad de Oferta Activa
+    </h1>
+    <p class="text-sm text-gray-500">
+      Documentación explícita de fuentes, métodos de captura, cobertura y nivel de confianza
+      de cada indicador derivado de oferta inmobiliaria en Temuco urbano.
+    </p>
+  </div>
+
+  <!-- Stats bar -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 text-center">
+      <div class="text-2xl font-bold text-blue-700">{{ data.n_sectores }}</div>
+      <div class="text-xs text-gray-500 mt-1">Sectores</div>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 text-center">
+      <div class="text-2xl font-bold text-emerald-600">{{ data.total_obs_venta }}</div>
+      <div class="text-xs text-gray-500 mt-1">Obs. de venta revisadas</div>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 text-center">
+      <div class="text-2xl font-bold text-purple-600">{{ data.total_obs_arriendo }}</div>
+      <div class="text-xs text-gray-500 mt-1">Obs. de arriendo revisadas</div>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 text-center">
+      <div class="text-2xl font-bold text-red-600">{{ data.n_baja_confianza }}</div>
+      <div class="text-xs text-gray-500 mt-1">Sectores baja / muy baja confianza</div>
+    </div>
+  </div>
+
+  <!-- Disclaimer global -->
+  <div class="bg-red-50 border border-red-200 rounded-xl px-5 py-3 mb-6 text-sm text-red-800">
+    <i class="fas fa-exclamation-circle mr-2 text-red-500"></i>
+    <strong>Datos de mercado de oferta, no de cierre.</strong>
+    Esta plataforma <strong>no tiene acceso al Conservador de Bienes Raíces (CBR) de Temuco</strong>.
+    Los precios, arriendos y transacciones publicados aquí provienen de avisos activos en portales
+    (Portal Inmobiliario, Yapo.cl), revisión manual y fórmulas estimadas.
+    Para precios de cierre verificados, solicitar directamente al CBR Temuco (Claro Solar 796)
+    o en conservador.cl.
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECCIÓN 1: CATÁLOGO DE FUENTES
+  ══════════════════════════════════════════════════════════════ -->
+  <div id="fuentes" class="section-card">
+    <div class="section-header">
+      <i class="fas fa-list-ul text-blue-500 text-lg"></i>
+      <div>
+        <h2 class="font-bold text-gray-800">Catálogo de Fuentes de Datos</h2>
+        <p class="text-xs text-gray-500">Todas las fuentes potenciales, indicando cuáles se utilizan actualmente</p>
+      </div>
+    </div>
+    <div class="section-body scroll-x">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th style="min-width:160px">Fuente</th>
+            <th>Tipo</th>
+            <th>Estado</th>
+            <th style="min-width:200px">Uso actual</th>
+            <th>Acceso</th>
+            <th style="min-width:260px">Nota</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in data.fuentes %}
+          {% set estado_cls = {
+            'UTILIZADO':    'estado-utilizado',
+            'PARCIAL':      'estado-parcial',
+            'NO UTILIZADO': 'estado-no_utilizado',
+          }.get(f.estado, 'estado-no_utilizado') %}
+          <tr>
+            <td>
+              <div class="font-semibold text-gray-800">{{ f.nombre }}</div>
+              {% if f.url and f.url != '—' %}
+              <div class="text-xs text-blue-500">{{ f.url }}</div>
+              {% endif %}
+            </td>
+            <td class="text-xs text-gray-600">{{ f.tipo }}</td>
+            <td>
+              <span class="conf-badge {{ estado_cls }}">
+                {% if f.estado == 'UTILIZADO' %}<i class="fas fa-check-circle"></i>
+                {% elif f.estado == 'PARCIAL' %}<i class="fas fa-adjust"></i>
+                {% else %}<i class="fas fa-times-circle"></i>{% endif %}
+                {{ f.estado }}
+              </span>
+            </td>
+            <td class="text-xs text-gray-700">{{ f.uso }}</td>
+            <td class="text-xs text-gray-600">{{ f.acceso }}</td>
+            <td class="text-xs text-gray-600">{{ f.nota }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECCIÓN 2: INDICADORES POR SECTOR
+  ══════════════════════════════════════════════════════════════ -->
+  <div id="indicadores" class="section-card">
+    <div class="section-header">
+      <i class="fas fa-table text-emerald-500 text-lg"></i>
+      <div>
+        <h2 class="font-bold text-gray-800">Indicadores por Sector</h2>
+        <p class="text-xs text-gray-500">Valor · Fecha de actualización · Fuente · Nivel de confianza</p>
+      </div>
+    </div>
+    <div class="section-body">
+
+      <!-- Selector de sector -->
+      <div class="flex flex-wrap gap-2 mb-4" id="sector-filter">
+        {% for sk, item in data.sectores.items() %}
+        <button
+          class="sector-pill {% if loop.first %}active{% endif %}"
+          onclick="mostrarSector('{{ sk }}')"
+          id="pill-{{ sk }}">
+          {{ item.nombre | replace(' / ', '/') | truncate(20, true, '…') }}
+        </button>
+        {% endfor %}
+      </div>
+
+      <!-- Leyenda confianza -->
+      <div class="flex flex-wrap gap-3 mb-4 text-xs">
+        <span class="font-semibold text-gray-500">Nivel confianza:</span>
+        <span class="conf-badge conf-alta"><i class="fas fa-check-circle"></i> Alta (≥ 30 obs.)</span>
+        <span class="conf-badge conf-media"><i class="fas fa-adjust"></i> Media (20–29 obs.)</span>
+        <span class="conf-badge conf-baja"><i class="fas fa-exclamation-circle"></i> Baja (10–19 obs.)</span>
+        <span class="conf-badge conf-muy_baja"><i class="fas fa-times-circle"></i> Muy baja (&lt; 10 obs. o fórmula)</span>
+      </div>
+
+      <!-- Tablas por sector (una visible a la vez) -->
+      {% for sk, item in data.sectores.items() %}
+      <div id="tabla-{{ sk }}" class="sector-tabla {% if not loop.first %}hidden{% endif %} scroll-x">
+        <div class="mb-2 flex items-center gap-2">
+          <h3 class="font-bold text-gray-800">{{ item.nombre }}</h3>
+          {% set clsf_colors = {
+            'alto':       'bg-violet-100 text-violet-800',
+            'medio_alto': 'bg-blue-100 text-blue-800',
+            'medio':      'bg-cyan-100 text-cyan-800',
+            'medio_bajo': 'bg-orange-100 text-orange-800',
+            'bajo':       'bg-red-100 text-red-800',
+          } %}
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full {{ clsf_colors.get(item.clasificacion, 'bg-gray-100 text-gray-700') }}">
+            {{ item.clasificacion.replace('_',' ').upper() }}
+          </span>
+        </div>
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th style="min-width:210px">Indicador</th>
+              <th style="min-width:240px">Valor</th>
+              <th style="min-width:130px">Fecha actualización</th>
+              <th style="min-width:220px">Fuente</th>
+              <th>N° obs.</th>
+              <th style="min-width:130px">Nivel confianza</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in item.indicadores %}
+            {% set conf_cls = 'conf-' ~ row.confianza %}
+            <tr {% if row.advertencia %}class="warn-row"{% endif %}>
+              <td class="font-medium text-gray-800">{{ row.indicador }}</td>
+              <td class="font-mono text-xs text-gray-700">{{ row.valor }}</td>
+              <td class="text-xs text-gray-500">{{ row.fecha }}</td>
+              <td class="text-xs text-gray-600">{{ row.fuente }}</td>
+              <td class="num text-xs">
+                {% if row.n_obs is not none %}{{ row.n_obs }}{% else %}<span class="text-gray-400">—</span>{% endif %}
+              </td>
+              <td>
+                <span class="conf-badge {{ conf_cls }}">
+                  {% if row.confianza == 'alta' %}<i class="fas fa-check-circle"></i>
+                  {% elif row.confianza == 'media' %}<i class="fas fa-adjust"></i>
+                  {% elif row.confianza == 'baja' %}<i class="fas fa-exclamation-circle"></i>
+                  {% else %}<i class="fas fa-times-circle"></i>{% endif %}
+                  {{ row.confianza.replace('_', ' ') }}
+                </span>
+              </td>
+            </tr>
+            {% if row.advertencia %}
+            <tr>
+              <td colspan="6" class="adv-cell">
+                <i class="fas fa-exclamation-triangle mr-1"></i>{{ row.advertencia }}
+              </td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endfor %}
+
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECCIÓN 3: OFERTA ACTIVA — DESGLOSE POR SECTOR
+  ══════════════════════════════════════════════════════════════ -->
+  <div id="oferta" class="section-card">
+    <div class="section-header">
+      <i class="fas fa-layer-group text-violet-500 text-lg"></i>
+      <div>
+        <h2 class="font-bold text-gray-800">Oferta Activa — Desglose por Sector</h2>
+        <p class="text-xs text-gray-500">
+          Propiedades detectadas · Revisadas · Válidas · Cobertura · Nivel de confianza
+        </p>
+      </div>
+    </div>
+
+    <!-- Disclaimer específico oferta activa -->
+    <div class="mx-5 mt-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs text-amber-800">
+      <i class="fas fa-exclamation-triangle mr-1 text-amber-500"></i>
+      <strong>Nota metodológica crítica:</strong>
+      La columna "Oferta activa (fórmula)" es una <strong>estimación derivada</strong> del tamaño del mercado
+      mediante fórmula interna — <strong>no proviene de scraping real de portales</strong>.
+      La columna "Publicaciones revisadas" representa el número de avisos efectivamente consultados
+      para construir los benchmarks de precio. La cobertura indica qué fracción del mercado estimado
+      fue efectivamente revisada. Donde la cobertura es baja, los benchmarks se apoyan en muestras pequeñas.
+    </div>
+
+    <div class="section-body mt-2 scroll-x">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th rowspan="2" style="min-width:170px; vertical-align:bottom">Sector</th>
+            <th colspan="4" style="text-align:center; background:#eff6ff">Oferta activa (venta)</th>
+            <th rowspan="2" style="min-width:90px; vertical-align:bottom">Portales utilizados</th>
+            <th rowspan="2" style="vertical-align:bottom">Fecha captura</th>
+            <th rowspan="2" style="vertical-align:bottom">Cobertura est.</th>
+            <th rowspan="2" style="min-width:130px; vertical-align:bottom">Nivel confianza</th>
+          </tr>
+          <tr>
+            <th style="background:#dbeafe">Est. total (fórmula)</th>
+            <th style="background:#dbeafe">Publicaciones revisadas</th>
+            <th style="background:#dbeafe">Duplicados/expirados est.</th>
+            <th style="background:#dbeafe">Válidas para benchmark</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sk, item in data.sectores.items() %}
+          {% set o = item.oferta %}
+          {% set conf_cls = 'conf-' ~ o.nivel_confianza %}
+
+          {# Cobertura color class #}
+          {% if o.cobertura_pct >= 50 %}{% set cob_cls = 'cob-high' %}
+          {% elif o.cobertura_pct >= 20 %}{% set cob_cls = 'cob-med' %}
+          {% elif o.cobertura_pct >= 10 %}{% set cob_cls = 'cob-low' %}
+          {% else %}{% set cob_cls = 'cob-vlow' %}{% endif %}
+
+          <tr>
+            <td>
+              <div class="font-semibold text-gray-800 text-xs">{{ item.nombre }}</div>
+              {% set clsf_colors_sm = {
+                'alto':       'bg-violet-100 text-violet-800',
+                'medio_alto': 'bg-blue-100 text-blue-800',
+                'medio':      'bg-cyan-100 text-cyan-800',
+                'medio_bajo': 'bg-orange-100 text-orange-800',
+                'bajo':       'bg-red-100 text-red-800',
+              } %}
+              <span class="text-xs font-bold px-1.5 py-0.5 rounded-full {{ clsf_colors_sm.get(item.clasificacion, 'bg-gray-100 text-gray-700') }}">
+                {{ item.clasificacion.replace('_',' ') }}
+              </span>
+            </td>
+            <td class="num bg-blue-50">
+              ~{{ o.n_formula }}
+              <div class="text-xs font-normal text-gray-400">fórmula est.</div>
+            </td>
+            <td class="num">{{ o.n_revisadas }}</td>
+            <td class="num text-orange-600">-{{ o.n_duplicados }}</td>
+            <td class="num text-emerald-700 font-bold">{{ o.n_validas }}</td>
+            <td class="text-xs text-gray-600">{{ o.portales }}</td>
+            <td class="text-xs text-gray-500">{{ o.fecha_captura }}</td>
+            <td class="num {{ cob_cls }}">{{ o.cobertura_pct }}%</td>
+            <td>
+              <span class="conf-badge {{ conf_cls }}">
+                {% if o.nivel_confianza == 'alta' %}<i class="fas fa-check-circle"></i>
+                {% elif o.nivel_confianza == 'media' %}<i class="fas fa-adjust"></i>
+                {% elif o.nivel_confianza == 'baja' %}<i class="fas fa-exclamation-circle"></i>
+                {% else %}<i class="fas fa-times-circle"></i>{% endif %}
+                {{ o.nivel_confianza.replace('_',' ') }}
+              </span>
+              {% if o.cobertura_pct < 20 %}
+              <div class="text-xs text-red-600 mt-1 font-medium">
+                <i class="fas fa-exclamation-triangle"></i> Cobertura insuficiente
+              </div>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <!-- Leyenda cobertura -->
+      <div class="mt-3 flex flex-wrap gap-4 text-xs text-gray-600">
+        <span><span class="cob-high">■</span> ≥ 50%: cobertura aceptable</span>
+        <span><span class="cob-med">■</span> 20–49%: cobertura parcial</span>
+        <span><span class="cob-low">■</span> 10–19%: cobertura insuficiente</span>
+        <span><span class="cob-vlow">■</span> &lt; 10%: cobertura muy baja — interpretar con extrema cautela</span>
+      </div>
+
+      <!-- Disclaimer por sector con baja cobertura -->
+      {% set sectores_advertencia = [] %}
+      {% for sk, item in data.sectores.items() %}
+      {% if item.oferta.cobertura_pct < 20 %}{% set _ = sectores_advertencia.append(item.nombre) %}{% endif %}
+      {% endfor %}
+
+      {% if sectores_advertencia %}
+      <div class="mt-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-xs text-red-800">
+        <i class="fas fa-exclamation-circle mr-1 text-red-500"></i>
+        <strong>Oferta activa estimada con información parcial. Interpretar con cautela.</strong><br>
+        Los siguientes sectores presentan cobertura de revisión inferior al 20% respecto al mercado estimado:
+        <strong>{{ sectores_advertencia | join(', ') }}</strong>.
+        Los benchmarks de precio y arriendo en estos sectores se construyeron con muestras pequeñas
+        y pueden no ser representativos del mercado. Para estos sectores, verificar directamente en
+        Portal Inmobiliario y Yapo.cl antes de tomar decisiones de inversión.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECCIÓN 4: METODOLOGÍA DE CÁLCULO
+  ══════════════════════════════════════════════════════════════ -->
+  <div class="section-card">
+    <div class="section-header">
+      <i class="fas fa-calculator text-gray-500 text-lg"></i>
+      <div>
+        <h2 class="font-bold text-gray-800">Metodología de cálculo por indicador</h2>
+        <p class="text-xs text-gray-500">Fórmulas exactas y fuentes de cada indicador</p>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% for key, meta in data.indicadores_meta.items() %}
+        {% set conf_cls = 'conf-' ~ meta.confianza_base if 'confianza_base' in meta else 'conf-baja' %}
+        <div class="border border-gray-200 rounded-xl p-4">
+          <div class="flex items-start justify-between mb-2">
+            <div class="font-semibold text-gray-800 text-sm">{{ meta.nombre }}</div>
+            <span class="conf-badge
+              {% if meta.tipo_calculo.startswith('Calculado') %}conf-media
+              {% elif meta.tipo_calculo.startswith('Observado') %}conf-media
+              {% elif meta.tipo_calculo.startswith('Estimado') %}conf-baja
+              {% elif meta.tipo_calculo.startswith('Índice') %}conf-baja
+              {% else %}conf-muy_baja{% endif %}
+              shrink-0 ml-2">
+              {{ meta.tipo_calculo | truncate(25, true, '…') }}
+            </span>
+          </div>
+          <div class="text-xs text-blue-600 font-medium mb-1">
+            <i class="fas fa-link mr-1"></i>{{ meta.fuentes_display }}
+          </div>
+          <p class="text-xs text-gray-600 leading-relaxed">{{ meta.metodologia }}</p>
+          {% if meta.advertencia %}
+          <div class="mt-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800">
+            <i class="fas fa-exclamation-triangle mr-1"></i>{{ meta.advertencia }}
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+// Sector filter
+function mostrarSector(sk) {
+  document.querySelectorAll('.sector-tabla').forEach(t => t.classList.add('hidden'));
+  document.querySelectorAll('.sector-pill').forEach(p => p.classList.remove('active'));
+  const t = document.getElementById('tabla-' + sk);
+  const p = document.getElementById('pill-' + sk);
+  if (t) t.classList.remove('hidden');
+  if (p) p.classList.add('active');
+}
+
+// Page nav active state
+function setNav(el) {
+  document.querySelectorAll('.page-nav a').forEach(a => a.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// Intersection observer for nav highlight
+const sections = ['fuentes', 'indicadores', 'oferta'];
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      document.querySelectorAll('.page-nav a').forEach(a => a.classList.remove('active'));
+      const link = document.querySelector('.page-nav a[href="#' + e.target.id + '"]');
+      if (link) link.classList.add('active');
+    }
+  });
+}, { threshold: 0.3 });
+sections.forEach(id => { const el = document.getElementById(id); if (el) obs.observe(el); });
+</script>
+
+</body>
+</html>

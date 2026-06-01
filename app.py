@@ -236,6 +236,17 @@ async def mapa_calor(request: Request, capa: str = "velocidad_venta"):
     })
 
 
+@app.get("/trazabilidad", response_class=HTMLResponse)
+async def trazabilidad_datos(request: Request):
+    from data_provenance import get_all_provenance
+    data = get_all_provenance()
+    return templates.TemplateResponse("trazabilidad.html", {
+        "request": request,
+        "data": data,
+        "ahora": datetime.now().strftime("%d/%m/%Y %H:%M"),
+    })
+
+
 @app.get("/transparencia", response_class=HTMLResponse)
 async def transparencia_datos(request: Request):
     datos = {}
