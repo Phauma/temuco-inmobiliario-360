@@ -265,14 +265,17 @@ SECTORES_TEMUCO: dict[str, SectorData] = {
 UF_CLP = 38_000           # UF aproximada en CLP (actualizar según SII)
 INFLACION_ANUAL = 0.045   # inflación promedio Chile
 
-# Cap rates NETOS realistas para Temuco (descontando vacancia, contrib., gastos comunes)
-# Fuente estimada: análisis de publicaciones Portal Inmobiliario + Yapo 2023-2024
+# Cap rates NETOS realistas para Temuco (descontando vacancia, contrib., gastos)
+# Método: NOI = arriendo_anual × (1-vacancia) - contribuciones (0.6% precio) - gastos_op (10% arriendo)
+# Fuente estimada: análisis publicaciones Portal Inmobiliario + Yapo 2023-2024
+# NOTA: el mercado residencial chileno tiene cap rates comprimidos por fuerte demanda propietaria.
+# La rentabilidad residencial se sostiene principalmente en plusvalía, no en flujo de arriendo.
 CAP_RATE_REFERENCIA = {
-    "departamento_centro": (0.040, 0.058),   # neto: 4-5.8%
-    "casa_barrio_medio":   (0.032, 0.050),   # neto: 3.2-5%
+    "departamento_centro": (0.028, 0.045),   # neto: 2.8-4.5% (incl. gastos comunes)
+    "casa_barrio_medio":   (0.020, 0.035),   # neto: 2.0-3.5%
     "local_comercial":     (0.048, 0.075),   # neto: 4.8-7.5%
-    "bodega":              (0.050, 0.080),   # neto: 5-8%
-    "oficina_centro":      (0.042, 0.062),   # neto: 4.2-6.2%
+    "bodega":              (0.050, 0.080),   # neto: 5.0-8.0%
+    "oficina_centro":      (0.040, 0.060),   # neto: 4.0-6.0%
 }
 VACANCIA_REFERENCIA = {
     "alta_demanda": 0.05,    # ~18 días/año sin arrendar

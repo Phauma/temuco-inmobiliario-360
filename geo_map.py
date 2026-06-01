@@ -62,10 +62,14 @@ def _val_to_color(val: float, lo: float, hi: float, invert: bool) -> str:
 # ─── Estimadores por sector ───────────────────────────────────────────────────
 
 def _cap_rate(s: SectorData) -> float:
-    precio = (s.precio_casa_uf_m2_min + s.precio_casa_uf_m2_max) / 2 * 100
-    bruto = s.arriendo_casa_uf_mes_ref * 12
-    neto = bruto * 0.93 - precio * 0.008  # vacancia 7% + contribuciones aprox
-    return round(max(neto / precio * 100, 1.5), 1)
+    precio_m2 = (s.precio_casa_uf_m2_min + s.precio_casa_uf_m2_max) / 2
+    precio    = precio_m2 * 100                         # referencia 100 m²
+    arr_anual = s.arriendo_casa_uf_mes_ref * 12
+    vacancia  = {"alta": 0.05, "media": 0.09, "baja": 0.15}.get(s.demanda_arriendo, 0.09)
+    contrib   = precio * 0.006                          # contribuciones ~0.6 % valor comercial/año
+    gastos_op = arr_anual * 0.10                        # admin + mantención: 10 % arriendo anual
+    noi       = arr_anual * (1 - vacancia) - contrib - gastos_op
+    return round(max(noi / precio * 100, 1.0), 1)
 
 
 def _transacciones_anuales(s: SectorData) -> int:

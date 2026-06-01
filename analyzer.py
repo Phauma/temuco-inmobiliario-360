@@ -59,13 +59,17 @@ Rangos reales por sector (casa 100m² / depto 55m²):
 - Padre Las Casas / Labranza: casa 6-9 UF/mes | depto 4.5-7 UF/mes
 Ajusta proporcionalmente si la superficie difiere de la referencia.
 
-CAP RATES NETOS REALES TEMUCO (ya descontados vacancia, contribuciones, gastos):
-- Dptos centro alta demanda: 3.8-5.5% neto
-- Casas barrios medios: 3.0-4.8% neto
+CAP RATES NETOS REALES TEMUCO (método NOI: arriendo × (1-vacancia) - contribuciones - gastos_op):
+- Casas residenciales (todos los sectores): 2.0-3.5% neto
+  Cap bruto casas: 3.0-4.5% | Gastos deducidos: contrib ~0.6% precio + gastos_op ~10% arriendo
+- Dptos centro alta demanda: 2.8-4.5% neto (gastos comunes reducen el neto vs bruto)
 - Locales comerciales: 4.5-7.0% neto
 - Bodegas/galpones: 5.0-7.5% neto
 - Oficinas centro: 4.0-6.0% neto
-NUNCA reportes cap rate neto >7.5% para Temuco sin justificación explícita.
+IMPORTANTE: El mercado residencial chileno tiene cap rates comprimidos. La inversión en casas/deptos
+se justifica principalmente por plusvalía (apreciación de capital), no por flujo de arriendo.
+NUNCA reportes cap rate neto >4.5% para casas/deptos en Temuco sin justificación explícita.
+NUNCA reportes cap rate neto >7.5% para ningún tipo de propiedad en Temuco.
 
 PLUSVALÍA — METODOLOGÍA Y ESCENARIOS:
 Debes reportar SIEMPRE tres escenarios y explicar la base:
